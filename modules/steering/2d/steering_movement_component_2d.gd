@@ -1,6 +1,72 @@
 extends Node
 class_name SteeringMovementComponent2D
 
-
-
 var _steering_behavior: SteeringBehaviour2D
+var _steering_parameters: SteeringParameters2D
+var _steering_agent: SteeringAgent2D = SteeringAgent2D.new()
+
+
+@export var character_2d: CharacterBody2D
+@export var update_position: bool
+
+
+var _target_acceleration: SteeringBehaviour2D.TargetAccelleration =  SteeringBehaviour2D.TargetAccelleration.new()
+
+func set_steering_behaviour(steering_behavior: SteeringBehaviour2D):
+	_steering_behavior = steering_behavior
+	return self
+	
+func set_steering_parameters(steering_parameters: SteeringParameters2D):
+	_steering_parameters = steering_parameters
+	return self
+
+func set_liner_drag(_drag: float):
+	_linear_drag = _drag
+	return self
+
+func set_angular_drag(_drag: float):
+	_angular_drag = _drag
+	return self
+
+var _velocity_per_position_update: Vector2 = Vector2.ZERO
+var _linear_drag = 0.1
+
+var _angular_velocity = 0.0
+var _angular_drag := 0.2
+
+func move(delta: float):
+	if not _steering_behavior:
+		return
+	_steering_behavior.calculate_steering(_steering_agent, _steering_parameters, _target_acceleration)
+		
+	var _velocity
+	if update_position:
+		_velocity = _velocity_per_position_update
+	else:
+		_velocity = character_2d.velocity
+		
+	_steering_agent.position = character_2d.global_position
+	_steering_agent.orientation = character_2d.rotation
+	_steering_agent.linear_velocity = _velocity
+	_steering_agent.angular_velocity = _angular_velocity
+		
+	_velocity = (_velocity + _target_acceleration.linear * delta).limit_length(_steering_parameters.linear_speed_max)
+	
+	if update_position:
+		_velocity_per_position_update = _velocity
+		character_2d.global_position += _velocity * delta
+	else:
+		character_2d.velocity = _velocity
+		character_2d.move_and_slide()
+
+	_velocity = _velocity.lerp(Vector2.ZERO, _linear_drag)
+
+	_angular_velocity = clamp(_angular_velocity + _target_acceleration.angular * delta, 
+		-_steering_parameters.angular_speed_max, 
+		_steering_parameters.angular_speed_max)
+
+	_angular_velocity = lerp(_angular_velocity, 0.0, _angular_drag)
+	if not is_zero_approx(_angular_velocity):
+		character_2d.rotation += _angular_velocity * delta
+
+	
