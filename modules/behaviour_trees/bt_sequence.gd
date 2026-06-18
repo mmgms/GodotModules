@@ -30,3 +30,8 @@ func _tick(delta: float) -> Status:
 func _abort():
 	_current_child_idx = 0
 	_children[_current_child_idx]._abort()
+
+
+
+func _get_debug_string() -> String:
+	return _get_debug_string_collection(_children, _children[_current_child_idx])

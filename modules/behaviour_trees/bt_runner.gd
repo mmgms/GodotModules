@@ -17,3 +17,9 @@ func run(delta: float):
 
 func abort():
 	_bt._abort()
+
+
+func get_debug_string() -> String:
+	if not _bt:
+		return ""
+	return _bt._get_debug_string()

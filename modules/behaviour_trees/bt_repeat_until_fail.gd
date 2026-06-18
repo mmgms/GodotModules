@@ -17,3 +17,7 @@ func _tick(delta: float) -> Status:
 	
 func _abort():
 	_child._abort()
+
+
+func _get_debug_string() -> String:
+	return _get_debug_decorator(_child)

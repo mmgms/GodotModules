@@ -55,3 +55,8 @@ func _tick(delta: float) -> Status:
 func _abort_running():
 	for child in _children:
 		child._abort()
+
+
+
+func _get_debug_string() -> String:
+	return _get_debug_string_collection(_children, null)

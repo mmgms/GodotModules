@@ -44,3 +44,7 @@ func _abort_lower(child):
 	var index = _children.find(child)
 	for i in range(index + 1, _children.size()):
 		_children[i]._abort()
+
+
+func _get_debug_string() -> String:
+	return _get_debug_string_collection(_children, _running_child)
