@@ -32,7 +32,7 @@ func setup(initial_velocity: Vector2, lifetime: float=-1):
 
 	return self
 
-## callback signature (delta, previous_velocity)
+## callback signature (delta, previous_velocity) -> new velocity
 func set_custom_velocity_update_callback(callback: Callable):
 	_velocity_update_callback = callback
 	return self
