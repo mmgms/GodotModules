@@ -5,7 +5,8 @@ static func collect_areas_in_radius_2d(space_state: PhysicsDirectSpaceState2D,
 		position: Vector2,
 		area_layer: int, 
 		radius: float) -> Array[Area2D]:
-
+	
+	var areas = [] as Array[Area2D]
 	var query = PhysicsShapeQueryParameters2D.new()
 	query.collide_with_areas = true
 	query.collide_with_bodies = false
@@ -18,9 +19,10 @@ static func collect_areas_in_radius_2d(space_state: PhysicsDirectSpaceState2D,
 
 	var res = space_state.intersect_shape(query)
 	if res.is_empty():
-		return []
-		
-	return res.map(func(x): return x.collider as Area2D)
+		return areas
+	
+	areas.assign(res.map(func(x): return x.collider as Area2D))
+	return areas
 
 static func check_area_raycast_avoid_static_2d(space_state: PhysicsDirectSpaceState2D, 
 		static_layer: int, 
