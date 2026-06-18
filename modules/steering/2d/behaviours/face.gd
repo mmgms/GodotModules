@@ -1,0 +1,2 @@
+extends SteeringBehaviour2D
+class_name SteeringFace2D
