@@ -1,6 +1,6 @@
 extends Node
 class_name SimpleInventoryComponent
-## Inventory that keeps track of current used item
+## Inventory with finite capacity that keeps track of current used item
 
 signal next_selection_updated(idx: int)
 signal current_selected_updated(idx: int)
@@ -19,7 +19,7 @@ class ItemData:
 
 var _items: Array[Item]
 
-var _capacity: int = 1
+var _capacity: int = 3
 
 var _current_used_idx: int = -1:
 	set(val):
@@ -33,25 +33,52 @@ var _next_selected_idx: int = -1:
 		next_selection_updated.emit(val)
 
 func set_capacity(capacity: int):
+	_items.resize(capacity)
 	if _capacity < _items.size():
 		assert(false)
 	_capacity = capacity
+	inventory_changed.emit(_items, _current_used_idx, _next_selected_idx)
 	return self
 
 func add_item(item: Item) -> bool:
-	if _items.size() >= _capacity:
+	var idx_to_add = -1
+	for i in _items.size():
+		if _items[i] == null:
+			idx_to_add = i
+			break
+
+	if idx_to_add < 0:
 		return false
-	_items.append(item)
+	
+	_items[idx_to_add] = item
 	if _current_used_idx < 0:
-		_current_used_idx = 0
+		_current_used_idx = idx_to_add
+
 	inventory_changed.emit(_items, _current_used_idx, _next_selected_idx)
 	return true
 
+
+## shifts items to fill gap
 func remove_item(item: Item):
-	_items.erase(item)
-	_current_used_idx = clampi(_current_used_idx, 0, _items.size()-1)
-	if _items.size() == 0:
-		_current_used_idx = -1
+	var idx_to_remove = _items.find(item)
+	if idx_to_remove < 0:
+		return
+
+	_items[idx_to_remove] = null
+
+	for i in range(idx_to_remove, _items.size()-1):
+		_items[i] = _items[i+1]
+		if i == _items.size()-2:
+			_items[_items.size()-1] = null
+
+
+	var idx_to_current_select = -1
+	for i in _items.size():
+		if _items[i] != null:
+			idx_to_current_select = i
+			break
+
+	_current_used_idx = idx_to_current_select
 
 	inventory_changed.emit(_items, _current_used_idx, _next_selected_idx)
 
@@ -64,11 +91,14 @@ func get_current_used_item() -> Item:
 func shift_next_selection(direction: int):
 	if is_empty():
 		assert(false)
-	_next_selected_idx = wrapi(_next_selected_idx + direction, 0, _items.size())
+	_next_selected_idx = wrapi(_next_selected_idx + direction, 0, _items.filter(func(x): return x != null).size())
 	
 	inventory_changed.emit(_items, _current_used_idx, _next_selected_idx)
 
 func confirm_next_selection():
+	if _items[_next_selected_idx] == null:
+		return
+
 	_current_used_idx = _next_selected_idx
 	
 	inventory_changed.emit(_items, _current_used_idx, _next_selected_idx)
@@ -89,6 +119,9 @@ func get_debug_string() -> String:
 		elif i == _next_selected_idx:
 			text += "[ul][color=blue]%s[/color][/ul]" % _items[i].name
 		else:
-			text += "[ul]%s[/ul]" % _items[i].name
+			if _items[i]:
+				text += "[ul]%s[/ul]" % _items[i].name
+			else:
+				text += "[ul]Empty[/ul]"
 
 	return text
