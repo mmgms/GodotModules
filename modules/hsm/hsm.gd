@@ -19,11 +19,13 @@ func send_event(event: StringName):
 	while current_parent != null and not _transition_found:
 		for transition in current_parent._transitions:
 			if transition._event == event:
-				if transition.guard and transition.guard.call():
+				if transition._guard and transition._guard.call():
 					_current_transition_to_process = transition
 					_transition_found = true
 					_transition_time_passed = 0.0
 					break
+					
+		current_parent = current_parent._parent
 	
 	
 
