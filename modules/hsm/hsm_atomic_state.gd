@@ -1,0 +1,2 @@
+extends HsmState
+class_name HsmAtomicState

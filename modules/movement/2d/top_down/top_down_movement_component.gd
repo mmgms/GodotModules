@@ -7,10 +7,14 @@ class_name TopDownMovementComponent
 
 var _dir_update_callback: Callable
 var _speed: float
-var _acceleration: float
+var _acceleration: float = 5000
 
-func setup(speed: float, acceleration: float = 5000):
+
+func set_speed(speed: float):
 	_speed = speed
+	return self
+
+func set__acceleration(acceleration: float):
 	_acceleration = acceleration
 	return self
 
