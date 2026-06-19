@@ -14,6 +14,10 @@ class Item:
 		name = _name
 		return self
 
+	func set_data(_data):
+		data = _data
+		return self
+
 class ItemData:
 	pass
 
@@ -103,12 +107,25 @@ func confirm_next_selection():
 	
 	inventory_changed.emit(_items, _current_used_idx, _next_selected_idx)
 
+func find_index(callable: Callable):
+	for i in _items:
+		if not _items[i]:
+			continue
 
-func get_inventory_size() -> int:
-	return _items.size()
+		if callable.call(_items[i]):
+			return i
+
+	return -1
+
+func remove_at_index(idx: int):
+	remove_item(_items[idx])
+
+
+func get_capacity() -> int:
+	return _capacity
 
 func is_empty() -> bool:
-	return _items.is_empty()
+	return _items.filter(func(x): return x != null).size() == 0
 
 
 func get_debug_string() -> String:

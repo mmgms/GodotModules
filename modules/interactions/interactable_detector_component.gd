@@ -35,13 +35,16 @@ func detect():
 		return
 		
 	var data = null
-	if _interaction_data_callback:
-		data = _interaction_data_callback.call()
 		
 	var area = interactable_areas[0] as Interactable2D
 	if area != _latest_interactable:
 		_latest_interactable = area
+		if _interaction_data_callback:
+			data = _interaction_data_callback.call(_latest_interactable.get_interacter_data_type())
 		_latest_interactable.enter(data)
+		
+	if _interaction_data_callback:
+			data = _interaction_data_callback.call(_latest_interactable.get_interacter_data_type())
 	if _confirm_interaction_callback.call():
 
 		if area.can_interact(data):

@@ -18,6 +18,14 @@ func set_enabled(enabled: bool):
 func is_enabled():
 	return _enabled
 	
+var _interacter_type: Variant
+
+func get_interacter_data_type():
+	return _interacter_type
+
+func set_interacter_data_type(_type: Variant):
+	_interacter_type = _type
+	return self
 
 ## callback signature (InteracterData) -> ()
 func set_interaction_callback(interaction_callack: Callable):
