@@ -12,6 +12,20 @@ var _steering_agent: SteeringAgent2D = SteeringAgent2D.new()
 
 var _target_acceleration: SteeringBehaviour2D.TargetAccelleration =  SteeringBehaviour2D.TargetAccelleration.new()
 
+var _get_orientation_callback: Callable
+var _set_orientation_callback: Callable
+
+## () -> float
+func set_get_orientation_callback(callable: Callable):
+	_get_orientation_callback = callable
+	return self
+
+## (float) -> void
+func set_set_orientation_callback(callable: Callable):
+	_set_orientation_callback = callable
+	return self
+
+
 func set_steering_behaviour(steering_behavior: SteeringBehaviour2D):
 	_steering_behavior = steering_behavior
 	return self
@@ -46,7 +60,8 @@ func move(delta: float):
 		_velocity = character_2d.velocity
 		
 	_steering_agent.position = character_2d.global_position
-	_steering_agent.orientation = character_2d.rotation
+	if _get_orientation_callback:
+		_steering_agent.orientation = _get_orientation_callback.call()
 	_steering_agent.linear_velocity = _velocity
 	_steering_agent.angular_velocity = _angular_velocity
 		
@@ -67,6 +82,8 @@ func move(delta: float):
 
 	_angular_velocity = lerp(_angular_velocity, 0.0, _angular_drag)
 	if not is_zero_approx(_angular_velocity):
-		character_2d.rotation += _angular_velocity * delta
+		_steering_agent.orientation += _angular_velocity * delta
+		if _set_orientation_callback:
+			_set_orientation_callback.call(_steering_agent.orientation)
 
 	
