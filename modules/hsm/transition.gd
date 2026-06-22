@@ -21,8 +21,9 @@ func set_delay(delay):
 
 func _take():
 	_from._handle_transition(_from, _to)
-
-	_taken_callback.call()
+	
+	if _taken_callback:
+		_taken_callback.call()
 
 
 

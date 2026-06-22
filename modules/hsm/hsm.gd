@@ -6,6 +6,7 @@ var root_state: HsmState
 
 func set_root(state: HsmState):
 	root_state = state
+	root_state._set_hsm(self)
 	return self
 
 var _current_transition_to_process: HsmTransition
@@ -19,7 +20,7 @@ func send_event(event: StringName):
 	while current_parent != null and not _transition_found:
 		for transition in current_parent._transitions:
 			if transition._event == event:
-				if transition._guard and transition._guard.call():
+				if not transition._guard or (transition._guard and transition._guard.call()):
 					_current_transition_to_process = transition
 					_transition_found = true
 					_transition_time_passed = 0.0
@@ -27,7 +28,9 @@ func send_event(event: StringName):
 					
 		current_parent = current_parent._parent
 	
-	
+func _set_transition_to_process(transition: HsmTransition):
+	_transition_time_passed = 0.0
+	_current_transition_to_process = transition
 
 func get_debug_string() -> String:
 	return root_state._get_debug_string()
@@ -42,12 +45,14 @@ func process(delta):
 				_transition_time_passed = 0.0
 
 				_should_take_transition = true
-		_should_take_transition = true
+		else:
+			_should_take_transition = true
 
 	if _should_take_transition:
-		_current_transition_to_process._take()
-
+		var _transition_to_process = _current_transition_to_process
 		_current_transition_to_process = null
+		_transition_to_process._take()
+
 
 
 	root_state._on_process(delta)

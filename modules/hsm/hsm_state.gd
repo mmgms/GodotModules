@@ -14,6 +14,11 @@ var _name: String
 
 var _parent: HsmState = null
 
+var _hsm: Hsm
+
+func _set_hsm(hsm: Hsm):
+	_hsm = hsm
+
 func set_name(name):
 	_name = name
 	return self
@@ -50,18 +55,23 @@ func _on_event(event: StringName):
 	
 func _on_enter():
 	if _enter_callback:
-		_event_callback.call()
+		_enter_callback.call()
+		
+	for transition in _transitions:
+		if transition._event.is_empty():
+			_hsm._set_transition_to_process(transition)
+			break
 	
 func _on_exit():
 	if _exit_callback:
 		_exit_callback.call()
 
 func _get_debug_string() -> String:
-	return ""
+	return "%s" % _name if not _name.is_empty() else get_script().get_global_name()
 
 
 func add_transition(transition: HsmTransition):
-	_transitions.append(transition)
+	transition._from._transitions.append(transition)
 	return self
 
 
