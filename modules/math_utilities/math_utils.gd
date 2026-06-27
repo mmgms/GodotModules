@@ -73,3 +73,10 @@ static func random_point_in_radius_xz(center: Vector3, radius: float) -> Vector3
 	)
 
 	return center + offset
+
+# you can get a rect from area2d (collision_shape.shape as RectangleShape2D).get_rect(), 
+# dont forget to add collision_shape.global_position
+static func sample_random_point_in_rect2d(rect: Rect2) -> Vector2:
+	var x = randf_range(rect.position.x, rect.position.x + rect.size.x)
+	var y = randf_range(rect.position.y, rect.position.y + rect.size.y)
+	return Vector2(x, y)
