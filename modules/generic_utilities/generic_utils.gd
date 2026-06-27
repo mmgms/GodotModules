@@ -92,3 +92,8 @@ static func find_children(root: Node, filter_callback: Callable) -> Array[Node]:
 	var nodes_collected: Array[Node] = []
 	_find_children_recursive(root, filter_callback, nodes_collected)
 	return nodes_collected
+
+
+static func is_user_defined_usage(usage) -> bool:
+	var flags = PROPERTY_USAGE_SCRIPT_VARIABLE
+	return usage & flags > 0
