@@ -12,7 +12,7 @@ func set_confirm_interaction_callback(confirm_interaction_callback: Callable):
 	return self
 
 var _interaction_data_callback: Callable
-## signature () -> Interactable2d.InteractionData
+## signature (the type of the interaction data requested) -> Interactable2d.InteractionData
 func set_interaction_data_callback(interaction_data_callback: Callable):
 	_interaction_data_callback = interaction_data_callback
 	return self

@@ -10,3 +10,9 @@ class HitData:
 
 func hit(data: HitData):
 	on_hit.emit(data)
+
+
+func set_enabled(enabled: bool):
+	for child in get_children():
+		if child is CollisionShape2D:
+			(child as CollisionShape2D).set_deferred("disabled", not enabled)
