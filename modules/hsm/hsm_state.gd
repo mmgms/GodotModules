@@ -16,6 +16,9 @@ var _parent: HsmState = null
 
 var _hsm: Hsm
 
+func _enter_first_time():
+	_on_enter()
+
 func _set_hsm(hsm: Hsm):
 	_hsm = hsm
 

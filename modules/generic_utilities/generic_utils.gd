@@ -87,7 +87,7 @@ static func _find_children_recursive(node: Node, filter_callback: Callable, node
 	for child in node.get_children():
 		_find_children_recursive(child, filter_callback, nodes_collected)
 
-
+# collect all children recursively who satisfy a callback
 static func find_children(root: Node, filter_callback: Callable) -> Array[Node]:
 	var nodes_collected: Array[Node] = []
 	_find_children_recursive(root, filter_callback, nodes_collected)

@@ -8,6 +8,10 @@ var _current_running: HsmState
 var _initial_state: HsmState
 
 
+func _enter_first_time():
+	_on_enter()
+	_current_running._enter_first_time()
+
 func _set_hsm(hsm: Hsm):
 	_hsm = hsm
 	for child in _children:

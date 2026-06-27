@@ -1,5 +1,7 @@
 class_name Hsm
-
+# Simple hierarchical state machine
+# call set_root to set hierarchy and initialize
+# call send_event to send event
 
 var root_state: HsmState
 
@@ -7,6 +9,8 @@ var root_state: HsmState
 func set_root(state: HsmState):
 	root_state = state
 	root_state._set_hsm(self)
+
+	root_state._enter_first_time()
 	return self
 
 var _current_transition_to_process: HsmTransition

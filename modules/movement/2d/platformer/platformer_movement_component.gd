@@ -56,6 +56,8 @@ func setup():
 	var _grounded_state = (
 		HsmAtomicState.new()
 				.set_name("Grounded")
+				.set_enter_callback(func():
+					pass)
 				.set_process_callback(func(_delta):
 					if not character.is_on_floor():
 						_hsm.send_event(_falling_event)
