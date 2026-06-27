@@ -6,6 +6,7 @@ class_name DialogueTree
 var _line_spoken_callback: Callable
 var _choices_callback: Callable
 var _character_speaking_callback: Callable
+var _action_taken_callback: Callable
 
 var _over_callback: Callable
 
@@ -15,6 +16,12 @@ var _root: DialogueNode
 ## () -> ()
 func set_over_callback(cb: Callable):
 	_over_callback = cb
+	return self
+
+## () -> ()
+## useful to step when action is processed
+func set_action_taken_callback(cb: Callable):
+	_action_taken_callback = cb
 	return self
 
 ## (String) -> ()
