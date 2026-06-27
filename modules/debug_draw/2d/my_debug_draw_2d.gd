@@ -118,6 +118,25 @@ func line(
 	))
 
 
+func path(
+	points: Array[Vector2],
+	duration: float = 1.0,
+	color: Color = Color.GREEN,
+	width: float = 2.0
+) -> void:
+	var now := Time.get_ticks_msec() / 1000.0
+
+	for i in points.size()-1:
+
+		_lines.append(DebugLine.new(
+			points[i],
+			points[i+1],
+			color,
+			width,
+			now + duration
+		))
+
+
 func text(
 	position: Vector2,
 	value: Variant,
