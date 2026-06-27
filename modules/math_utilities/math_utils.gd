@@ -1,8 +1,12 @@
 class_name MathUtils
 
 static func random_direction_xz() -> Vector3:
-	var angle = randf() * TAU # random angle in radians
+	var angle = randf() * TAU 
 	return Vector3(cos(angle), 0, sin(angle))
+
+static func random_direction_2d() -> Vector2:
+	var angle = randf() * TAU
+	return Vector2(cos(angle), sin(angle))
 
 static func make_transform_from_normal(position: Vector3, normal: Vector3) -> Transform3D:
 	var up := Vector3.UP
