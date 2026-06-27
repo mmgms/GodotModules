@@ -1,7 +1,0 @@
-[gd_scene format=3 uid="uid://c1hyxkml2pd2j"]
-
-[ext_resource type="Script" path="res://modules/debug_draw/2d/my_debug_draw_2d.gd" id="1_afr0x"]
-
-[node name="MyDebugDraw2D" type="Node2D" unique_id=1171341305]
-z_index = 4
-script = ExtResource("1_afr0x")
