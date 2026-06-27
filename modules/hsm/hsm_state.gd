@@ -85,6 +85,7 @@ func _handle_transition(from: HsmState, target: HsmState):
 	if target == self:
 		_on_exit()
 		_on_enter()
+		return
 	if _parent:
 		_parent._handle_transition(from, target)
 
