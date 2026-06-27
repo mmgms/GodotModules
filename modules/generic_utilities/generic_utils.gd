@@ -97,3 +97,9 @@ static func find_children(root: Node, filter_callback: Callable) -> Array[Node]:
 static func is_user_defined_usage(usage) -> bool:
 	var flags = PROPERTY_USAGE_SCRIPT_VARIABLE
 	return usage & flags > 0
+
+
+static func strip_bbcode(source:String) -> String:
+	var regex = RegEx.new()
+	regex.compile("\\[.+?\\]")
+	return regex.sub(source, "", true)
