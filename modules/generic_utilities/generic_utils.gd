@@ -78,3 +78,17 @@ static func enum_to_string(enum_dict: Dictionary, value: int) -> String:
 		if enum_dict[key] == value:
 			return key
 	return str(value)  # fallback to int if not found
+
+
+static func _find_children_recursive(node: Node, filter_callback: Callable, nodes_collected: Array[Node]):
+	if filter_callback.call(node):
+		nodes_collected.append(node)
+
+	for child in node.get_children():
+		_find_children_recursive(child, filter_callback, nodes_collected)
+
+
+static func find_children(root: Node, filter_callback: Callable) -> Array[Node]:
+	var nodes_collected: Array[Node] = []
+	_find_children_recursive(root, filter_callback, nodes_collected)
+	return nodes_collected
