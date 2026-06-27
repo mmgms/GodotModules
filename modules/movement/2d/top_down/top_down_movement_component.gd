@@ -1,12 +1,13 @@
 extends Node
 class_name TopDownMovementComponent
+## Simple top down movement need to set direction update callback
 
 
 @export var character2d: CharacterBody2D
 
 
 var _dir_update_callback: Callable
-var _speed: float
+var _speed: float = 1000
 var _acceleration: float = 5000
 
 
