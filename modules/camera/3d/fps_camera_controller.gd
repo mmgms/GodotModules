@@ -1,7 +1,7 @@
 extends Node
 class_name FPSCameraController3D
 ## Updates camera rig based on input callback, needs pitch yaw camera rig
-
+## can be used for third person add a springarm3d as a parent of camera and set spring length as the camera distance
 
 @export_category("Nodes")
 @export var pitch: Node3D

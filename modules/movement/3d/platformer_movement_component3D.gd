@@ -6,7 +6,7 @@ class_name PlatformerMovementComponent3D
 @export var character: CharacterBody3D
 
 @export var acceleration_on_ground: float = 10.0
-@export var acceleration_on_air: float = 1.0
+@export var acceleration_on_air: float = 4.0
 
 
 @export var deceleration_on_ground: float = 10.0
@@ -16,7 +16,7 @@ class_name PlatformerMovementComponent3D
 @export var max_cancel_jump_time: float = 0.2
 @export var max_jump_buffering_time: float = 0.5
 @export var y_velocity_on_cancel: float = 1.0
-@export var max_jumps: int = 2
+@export var max_jumps: int = 1
 
 
 @export var base_speed: float = 3.0
