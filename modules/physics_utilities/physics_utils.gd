@@ -42,3 +42,47 @@ static func check_area_raycast_avoid_static_2d(space_state: PhysicsDirectSpaceSt
 
 	
 	return res.collider as Area2D
+
+
+
+static func collect_areas_in_radius_3d(space_state: PhysicsDirectSpaceState3D, 
+		position: Vector3,
+		area_layer: int, 
+		radius: float) -> Array[Area3D]:
+	
+	var areas = [] as Array[Area3D]
+	var query = PhysicsShapeQueryParameters3D.new()
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+
+	query.collision_mask = area_layer
+
+	query.shape = SphereShape3D.new()
+	query.shape.radius = radius
+	query.transform = Transform3D(Basis.IDENTITY, position)
+
+	var res = space_state.intersect_shape(query)
+	if res.is_empty():
+		return areas
+	
+	areas.assign(res.map(func(x): return x.collider as Area3D))
+	return areas
+
+static func check_area_raycast_avoid_static_3d(space_state: PhysicsDirectSpaceState3D, 
+		static_layer: int, 
+		area_layer: int, 
+		from: Vector3, 
+		to: Vector3) -> Area3D:
+
+	var query = PhysicsRayQueryParameters3D.create(from, to) 
+	query.collide_with_areas = true
+	query.collide_with_bodies = true
+
+	query.collision_mask = static_layer | area_layer
+
+	var res = space_state.intersect_ray(query)
+	if res.is_empty() or res.collider is StaticBody3D:
+		return null
+
+	
+	return res.collider as Area3D
