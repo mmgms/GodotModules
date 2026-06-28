@@ -1,18 +1,18 @@
 extends Node
-class_name SteeringMovementComponent2D
+class_name SteeringMovementComponent3D
+
 ## steering component, need to set orientation callbacks, steering behaviours and parameters
 
+var _steering_behavior: SteeringBehaviour3D
+var _steering_parameters: SteeringParameters3D
+var _steering_agent: SteeringAgent3D = SteeringAgent3D.new()
 
-var _steering_behavior: SteeringBehaviour2D
-var _steering_parameters: SteeringParameters2D
-var _steering_agent: SteeringAgent2D = SteeringAgent2D.new()
 
-
-@export var character_2d: CharacterBody2D
+@export var character_3d: CharacterBody3D
 @export var update_position: bool
 
 
-var _target_acceleration: SteeringBehaviour2D.TargetAccelleration =  SteeringBehaviour2D.TargetAccelleration.new()
+var _target_acceleration: SteeringBehaviour3D.TargetAccelleration =  SteeringBehaviour3D.TargetAccelleration.new()
 
 var _get_orientation_callback: Callable
 var _set_orientation_callback: Callable
@@ -28,11 +28,11 @@ func set_set_orientation_callback(callable: Callable):
 	return self
 
 
-func set_steering_behaviour(steering_behavior: SteeringBehaviour2D):
+func set_steering_behaviour(steering_behavior: SteeringBehaviour3D):
 	_steering_behavior = steering_behavior
 	return self
 	
-func set_steering_parameters(steering_parameters: SteeringParameters2D):
+func set_steering_parameters(steering_parameters: SteeringParameters3D):
 	_steering_parameters = steering_parameters
 	return self
 
@@ -56,12 +56,12 @@ func move(delta: float):
 	_steering_behavior.calculate_steering(_steering_agent, _steering_parameters, _target_acceleration)
 		
 	var _velocity
-	if update_position:
+	if update_position:# add get vel callback
 		_velocity = _velocity_per_position_update
 	else:
-		_velocity = character_2d.velocity
+		_velocity = character_3d.velocity
 		
-	_steering_agent.position = character_2d.global_position
+	_steering_agent.position = character_3d.global_position# add get pos callback
 	if _get_orientation_callback:
 		_steering_agent.orientation = _get_orientation_callback.call()
 	_steering_agent.linear_velocity = _velocity
@@ -69,14 +69,14 @@ func move(delta: float):
 		
 	_velocity = (_velocity + _target_acceleration.linear * delta).limit_length(_steering_parameters.linear_speed_max)
 	
-	if update_position:
+	if update_position:# add set vel callback
 		_velocity_per_position_update = _velocity
-		character_2d.global_position += _velocity * delta
+		character_3d.global_position += _velocity * delta
 	else:
-		character_2d.velocity = _velocity
-		character_2d.move_and_slide()
+		character_3d.velocity = _velocity
+		character_3d.move_and_slide()
 
-	_velocity = _velocity.lerp(Vector2.ZERO, _linear_drag)
+	_velocity = _velocity.lerp(Vector3.ZERO, _linear_drag)
 
 	_angular_velocity = clamp(_angular_velocity + _target_acceleration.angular * delta, 
 		-_steering_parameters.angular_speed_max, 
@@ -87,5 +87,3 @@ func move(delta: float):
 		_steering_agent.orientation += _angular_velocity * delta
 		if _set_orientation_callback:
 			_set_orientation_callback.call(_steering_agent.orientation)
-
-	

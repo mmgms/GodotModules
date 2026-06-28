@@ -1,17 +1,17 @@
-extends SteeringBehaviour2D
-class_name SteeringBlend2D
+extends SteeringBehaviour3D
+class_name SteeringBlend3D
 
 var _behaviors := []
-var _accel = SteeringBehaviour2D.TargetAccelleration.new()
+var _accel = SteeringBehaviour3D.TargetAccelleration.new()
 
 
 # Appends a behavior to the internal array along with its `weight`.
-func add(behavior: SteeringBehaviour2D, weight: float):
+func add(behavior: SteeringBehaviour3D, weight: float):
 	_behaviors.append({behavior = behavior, weight = weight})
 	return self
 
 
-func calculate_steering(agent: SteeringAgent2D, parameters: SteeringParameters2D, blended_accel: TargetAccelleration) -> void:
+func calculate_steering(agent: SteeringAgent3D, parameters: SteeringParameters3D, blended_accel: TargetAccelleration) -> void:
 	blended_accel.set_zero()
 
 	for i in range(_behaviors.size()):
