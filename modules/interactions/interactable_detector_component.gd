@@ -1,5 +1,6 @@
 extends Node
 class_name InteractableDetectorComponent2D
+## detects interactable2d, call detect()
 
 @export_flags_2d_physics var interactables_mask: int
 @export var detection_radius: float = 20
