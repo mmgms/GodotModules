@@ -1,6 +1,5 @@
 extends Node
 class_name SteeringMovementComponent3D
-
 ## steering component, need to set steering behaviour and parameters
 ## need to set velocity and position callbacks, or set node3d or character 3d for auto update (calls move_and_slide())
 ## need to set get and set orientation callbacks or node3d
@@ -16,18 +15,15 @@ var _get_agent_position_callback: Callable
 var _get_velocity_callback: Callable
 var _set_velocity_callback: Callable
 
-var _character3d: CharacterBody3D
-var _node3d: Node3D
-
 
 var _get_orientation_callback: Callable
 var _set_orientation_callback: Callable
 
-var _velocity_per_position_update: Vector2 = Vector2.ZERO
+var _velocity_per_position_update: Vector3 = Vector3.ZERO
 
 
 func set_node3d_for_velocity_update(node: Node3D):
-	_node3d = node
+	var _node3d = node
 	_get_agent_position_callback = func(): return node.global_position
 	_get_velocity_callback = func(): return _velocity_per_position_update
 	_set_velocity_callback = func(delta, vel): _velocity_per_position_update = vel; node.global_position += vel * delta;
@@ -35,10 +31,10 @@ func set_node3d_for_velocity_update(node: Node3D):
 	
 
 func set_character3d_for_velocity_update(node: CharacterBody3D):
-	_character3d = node
+	var _character3d = node
 	_get_agent_position_callback = func(): return _character3d.global_position
 	_get_velocity_callback = func(): return _character3d.velocity
-	_set_velocity_callback = func(delta, vel): _character3d.velocity = vel; _character3d.move_and_slide()
+	_set_velocity_callback = func(_delta, vel): _character3d.velocity = vel; _character3d.move_and_slide()
 	return self
 
 
