@@ -1,26 +1,26 @@
 extends Node
-class_name PlatformerMovementComponent
+class_name PlatformerMovementComponent3D
 ## simple platformer call setup to initialize
 
 
-@export var character: CharacterBody2D
+@export var character: CharacterBody3D
 
-@export var acceleration_on_ground: float = 2000.0
-@export var acceleration_on_air: float = 1000.0
+@export var acceleration_on_ground: float = 10.0
+@export var acceleration_on_air: float = 1.0
 
 
-@export var deceleration_on_ground: float = 2000.0
-@export var deceleration_on_air: float = 400.0
+@export var deceleration_on_ground: float = 10.0
+@export var deceleration_on_air: float = 4.0
 
 @export var coyote_jump_time: float = 0.1
-@export var max_cancel_jump_time: float = 0.1
+@export var max_cancel_jump_time: float = 0.2
 @export var max_jump_buffering_time: float = 0.5
-@export var y_velocity_on_cancel: float = -200
+@export var y_velocity_on_cancel: float = 1.0
 @export var max_jumps: int = 2
 
 
-@export var base_speed: float = 100.0
-@export var jump_speed: float = 500.0
+@export var base_speed: float = 3.0
+@export var jump_speed: float = 7.0
 
 var _current_jump_counter: int = 1
 
@@ -28,7 +28,7 @@ var _horizontal_movement_direction_callback: Callable
 var _jump_requested_callback: Callable
 
 
-## () -> float
+## () -> Vector2 [xy -> xz]
 func set_horizontal_movement_direction_callback(callback: Callable):
 	_horizontal_movement_direction_callback = callback
 	return self
@@ -194,13 +194,14 @@ func set_decelerations(ground, air):
 	return self
 
 func jump(jump_speed):
-	character.velocity.y = - jump_speed
+	character.velocity.y = jump_speed
 
 
 func move(delta: float):
 	
 	_hsm.process(delta)
-	var movement_direction = _horizontal_movement_direction_callback.call()
+	
+	var movement_direction: Vector2 = _horizontal_movement_direction_callback.call()
 	var _movement_velocity = character.velocity
 	if not character.is_on_floor():
 		_movement_velocity += character.get_gravity() * delta
@@ -208,12 +209,13 @@ func move(delta: float):
 	var _accel =  acceleration_on_ground if character.is_on_floor() else acceleration_on_air
 	var _decel = deceleration_on_ground if character.is_on_floor() else deceleration_on_air
 
-	if abs(movement_direction) > 0:
-		_movement_velocity.x = move_toward(_movement_velocity.x, movement_direction * base_speed, _accel * delta)
+	if not movement_direction.is_zero_approx():
+		var to = Vector3(movement_direction.x * base_speed, _movement_velocity.y, movement_direction.y * base_speed)
+		_movement_velocity = _movement_velocity.move_toward(to, _accel * delta)
 	else:
-		_movement_velocity.x = move_toward(_movement_velocity.x, 0.0, _decel * delta)
+		var to = Vector3(0.0, _movement_velocity.y, 0.0)
+		_movement_velocity = _movement_velocity.move_toward(to, _decel * delta)
 
-	#_movement_velocity = Vector2(_movement_velocity.x, character.velocity.y)
 
 	character.velocity = _movement_velocity
 	character.move_and_slide()
