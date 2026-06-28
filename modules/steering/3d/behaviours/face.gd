@@ -38,7 +38,6 @@ func calculate_steering(agent: SteeringAgent3D, parameters: SteeringParameters3D
 
 	var to_target = _get_target_position_callback.call() - agent.position
 	
-	var to_target_flat = Vector2(to_target.x, to_target.z)
 	var distance_squared = to_target.length_squared()
 
 	if distance_squared < parameters.zero_linear_speed_threshold:

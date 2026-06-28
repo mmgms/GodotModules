@@ -28,8 +28,6 @@ func calculate_steering(agent: SteeringAgent3D, parameters: SteeringParameters3D
 		return
 		
 	var _next_point = _path[_current_path_idx]
-
-	DebugDraw3D.draw_sphere(_next_point, 0.2, Color.GREEN, 0.016)
 	
 	var distance_to_next_point = agent.position.distance_to(_next_point)
 	if distance_to_next_point < _path_offset:
