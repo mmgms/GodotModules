@@ -86,5 +86,11 @@ static func is_point_in_cone2d(point: Vector2, cone_pos: Vector2, cone_dir: Vect
 
 	var angle_to_target = cone_dir.angle_to(cone_pos.direction_to(point))
 
-	DebugDraw2D.set_text("ang", rad_to_deg(angle_to_target))
+	return abs(angle_to_target) < half_angle
+
+
+static func is_point_in_cone3d(point: Vector3, cone_pos: Vector3, cone_dir: Vector3, half_angle: float) -> bool:
+
+	var angle_to_target = cone_dir.angle_to(cone_pos.direction_to(point))
+
 	return abs(angle_to_target) < half_angle

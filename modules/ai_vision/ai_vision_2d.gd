@@ -1,6 +1,7 @@
 extends Node
 class_name AiVision2D
-## Check for all areas in range wheter they are visible through raycast
+## Check for all areas in range wheter they are inside defined shapes and visible through raycast
+## assumes shapes origin point starts at raycast_start_node.global_position
 
 @export_flags_2d_physics var static_layer: int
 
