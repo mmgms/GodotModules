@@ -80,3 +80,11 @@ static func sample_random_point_in_rect2d(rect: Rect2) -> Vector2:
 	var x = randf_range(rect.position.x, rect.position.x + rect.size.x)
 	var y = randf_range(rect.position.y, rect.position.y + rect.size.y)
 	return Vector2(x, y)
+
+
+static func is_point_in_cone2d(point: Vector2, cone_pos: Vector2, cone_dir: Vector2, half_angle: float) -> bool:
+
+	var angle_to_target = cone_dir.angle_to(cone_pos.direction_to(point))
+
+	DebugDraw2D.set_text("ang", rad_to_deg(angle_to_target))
+	return abs(angle_to_target) < half_angle
