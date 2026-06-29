@@ -110,5 +110,6 @@ func _forward_canvas_gui_input(event):
 	return false    
 
 
+
 func _get_graph2d_from_element(elem: Node2D) -> Graph2D:
 	return elem.get_parent().get_parent() as Graph2D

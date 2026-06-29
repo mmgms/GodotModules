@@ -25,7 +25,11 @@ func add_node(position: Vector2, cb=null):
 	
 	await get_tree().process_frame
 	graph_node.owner = _get_owner()
-	graph_node.global_position = position
+	
+	var pos_updated = position
+	if _is_grid_snapping_enabled():
+		pos_updated = position.snapped(_get_grid_step())
+	graph_node.global_position = pos_updated
 	if cb:
 		cb.call(graph_node)
 
@@ -141,6 +145,18 @@ func get_edges() -> Array[Graph2dEdgeInfo]:
 	return edges
 
 
+func _is_grid_snapping_enabled():
+	return true
+
+func _get_grid_step():
+	var _grid_step = Vector2()
+	var snap_dialog := EditorInterface.get_base_control().find_child("*SnapDialog*", true, false)
+	if snap_dialog:
+		var spin_boxes := snap_dialog.find_children("*", "SpinBox", true, false)
+		# get
+		_grid_step.x = spin_boxes[2].get_value()
+		_grid_step.y = spin_boxes[3].get_value()
+	return _grid_step
 
 
 	

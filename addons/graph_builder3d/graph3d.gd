@@ -25,7 +25,11 @@ func add_node(position: Vector3, cb=null):
 	
 	await get_tree().process_frame
 	graph_node.owner = _get_owner()
-	graph_node.global_position = position
+	
+	var pos_updated = position
+	if _is_grid_snapping_enabled():
+		pos_updated = position.snapped(Vector3.ONE * _get_grid_snap())
+	graph_node.global_position = pos_updated
 	if cb:
 		cb.call(graph_node)
 
@@ -139,3 +143,9 @@ func get_edges() -> Array[Graph3dEdgeInfo]:
 		return info
 		))
 	return edges
+	
+func _is_grid_snapping_enabled():
+	return EditorInterface.is_node_3d_snap_enabled()
+	
+func _get_grid_snap():
+	return EditorInterface.get_node_3d_translate_snap()*10
