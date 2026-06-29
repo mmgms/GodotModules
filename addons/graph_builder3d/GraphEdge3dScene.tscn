@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://658s7niyo4s8"]
+
+[ext_resource type="Script" uid="uid://bdd35uckte5pb" path="res://addons/graph_builder3d/graph_edge_3d.gd" id="1_npm78"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xkxxh"]
+resource_local_to_scene = true
+albedo_color = Color(0, 1, 0, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_xkxxh"]
+top_radius = 0.01
+bottom_radius = 0.3
+height = 0.5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_npm78"]
+resource_local_to_scene = true
+top_radius = 0.1
+bottom_radius = 0.1
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_xkxxh"]
+resource_local_to_scene = true
+radius = 0.1
+
+[node name="GraphEdge3dScene" type="Node3D" unique_id=1245966936]
+script = ExtResource("1_npm78")
+
+[node name="Arrow" type="MeshInstance3D" parent="." unique_id=1624001871]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, -0.5)
+material_override = SubResource("StandardMaterial3D_xkxxh")
+mesh = SubResource("CylinderMesh_xkxxh")
+
+[node name="Arrow2" type="MeshInstance3D" parent="." unique_id=219240835]
+transform = Transform3D(-1, -8.742278e-08, -3.821371e-15, 0, -4.371139e-08, 1, -8.742278e-08, 1, 4.371139e-08, 0, 0, 0.5)
+visible = false
+material_override = SubResource("StandardMaterial3D_xkxxh")
+mesh = SubResource("CylinderMesh_xkxxh")
+
+[node name="Connection" type="MeshInstance3D" parent="." unique_id=1402066035]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_xkxxh")
+mesh = SubResource("CylinderMesh_npm78")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=51099108]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
+collision_layer = 2147483648
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=841657939]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0053710938, 0, 0)
+shape = SubResource("CylinderShape3D_xkxxh")

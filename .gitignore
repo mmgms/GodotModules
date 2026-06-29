@@ -8,3 +8,4 @@ project.godot
 /tests/
 .editorconfig
 !/addons/graph_builder2d/
+!/addons/graph_builder3d/

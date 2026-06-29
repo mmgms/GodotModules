@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://sjy2nd5yni8m"]
+
+[ext_resource type="Script" uid="uid://dmqwuk510ncvg" path="res://addons/graph_builder3d/graph_node_3d.gd" id="1_eiyim"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eiyim"]
+resource_local_to_scene = true
+albedo_color = Color(1, 0, 0, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_ul5m0"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_eiyim"]
+
+[node name="GraphNode3dScene" type="Node3D" unique_id=326609549]
+script = ExtResource("1_eiyim")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1119848643]
+material_override = SubResource("StandardMaterial3D_eiyim")
+mesh = SubResource("SphereMesh_ul5m0")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=395373012]
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1504751636]
+shape = SubResource("SphereShape3D_eiyim")
