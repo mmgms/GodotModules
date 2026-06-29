@@ -3,7 +3,8 @@
 /android/
 project.godot
 /assets/
-/addons/
+/addons/*
 /godot_state_charts_examples/
 /tests/
 .editorconfig
+!/addons/graph_builder2d/
