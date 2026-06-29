@@ -20,6 +20,7 @@ func add_node(position: Vector2, cb=null):
 		nodes_parent.owner = _get_owner()
 	
 	var graph_node = GraphNode2D.new()
+	graph_node.name = "GraphNode2D"
 	nodes_parent.add_child(graph_node, true)
 	
 	await get_tree().process_frame
@@ -40,6 +41,7 @@ func add_edge(from: GraphNode2D):
 		edges_parent.owner = _get_owner()
 	
 	var graph_edge = GraphEdge2D.new()
+	graph_edge.name = "GraphEdge2D"
 	edges_parent.add_child(graph_edge, true)
 	await get_tree().process_frame
 	graph_edge.owner = _get_owner()
@@ -88,4 +90,57 @@ func get_closest_point(pos: Vector2):
 		return null
 		
 	return closest[0]
+	
+class Graph2dNodeInfo:
+	var id: int
+	var notes: String
+	var position: Vector2
+
+	
+class Graph2dEdgeInfo:
+	var from: int
+	var to: int
+	var notes: String
+	var bidirectional: bool
+	
+	
+func get_nodes() -> Array[Graph2dNodeInfo]:
+	var nodes : Array[Graph2dNodeInfo] = []
+	if not nodes_parent:
+		return nodes
+	
+	nodes.assign(nodes_parent.get_children().map(func(x):
+		var node = x as GraphNode2D
+		var info = Graph2dNodeInfo.new()
+
+		info.id = x.get_index()
+		info.position = x.global_position
+		info.notes = x.notes
+
+		return info
+		))
+	return nodes
+
+func get_edges() -> Array[Graph2dEdgeInfo]:
+	var edges : Array[Graph2dEdgeInfo] = []
+	if not edges_parent:
+		return edges
+	
+	edges.assign(edges_parent.get_children().map(func(x):
+		var node = x as GraphEdge2D
+
+		var info = Graph2dEdgeInfo.new()
+
+		info.from = x.from.get_index()
+		info.to = x.to.get_index()
+		info.notes = x.notes
+		info.bidirectional = x.bidirectional
+		
+		return info
+		))
+	return edges
+
+
+
+
 	
