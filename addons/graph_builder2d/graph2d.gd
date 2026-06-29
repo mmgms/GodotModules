@@ -115,7 +115,7 @@ func get_nodes() -> Array[Graph2dNodeInfo]:
 
 		info.id = x.get_index()
 		info.position = x.global_position
-		info.notes = x.notes
+		info.notes = x.note
 
 		return info
 		))
@@ -133,7 +133,7 @@ func get_edges() -> Array[Graph2dEdgeInfo]:
 
 		info.from = x.from.get_index()
 		info.to = x.to.get_index()
-		info.notes = x.notes
+		info.notes = x.note
 		info.bidirectional = x.bidirectional
 		
 		return info
