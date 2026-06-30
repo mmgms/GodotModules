@@ -46,6 +46,31 @@ func is_in_bounds_veci(vec: Vector2i) -> bool:
 func get_center() -> Vector2i:
 	return Vector2i(_size_x/2, _size_y/2)
 
+var _four_dir = [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP]
+
+func get_neighbours_4(pos: Vector2i) -> Array[Vector2i]:
+	assert(is_in_bounds_veci(pos))
+	var neigh: Array[Vector2i] = []
+	for dir in _four_dir:
+		if is_in_bounds_veci(pos + dir):
+			neigh.append(pos + dir)
+
+	return neigh
+
+var _eight_dir = [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, 
+	Vector2i.DOWN+Vector2i.LEFT, Vector2i.DOWN+Vector2i.RIGHT,
+	Vector2i.UP+Vector2i.LEFT, Vector2i.UP+Vector2i.RIGHT]
+
+func get_neighbours_8(pos: Vector2i) -> Array[Vector2i]:
+	assert(is_in_bounds_veci(pos))
+	var neigh: Array[Vector2i] = []
+	for dir in _eight_dir:
+		if is_in_bounds_veci(pos + dir):
+			neigh.append(pos + dir)
+
+	return neigh
+
+
 
 func _data_idx_to_vec2i(idx: int) -> Vector2i:
 	var x = idx / _size_x

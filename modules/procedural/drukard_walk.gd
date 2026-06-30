@@ -1,6 +1,7 @@
 class_name DrunkardWalkGenerator
+# simple dungeon generator, returns grid 2d filled with CellType
 
-enum TileType {None, Corridor, Room}
+enum CellType {None, Corridor, Room}
 
 
 var _grid: Grid2D
@@ -29,13 +30,13 @@ class BranchData:
 
 func _init(_size: Vector2i = Vector2i(40, 40)) -> void:
 	_grid = Grid2D.new(_size.x, _size.y)
-	_grid.fill(TileType.None)
+	_grid.fill(CellType.None)
 
 var _current_position: Vector2i
 var _current_direction: Vector2i
 
 
-func _generate_room(type: TileType, room_pos: Vector2i):
+func _generate_room(type: CellType, room_pos: Vector2i):
 	var room_w = randi_range(min_room_size, max_room_size)
 	var room_h = randi_range(min_room_size, max_room_size)
 	var start_pos = room_pos - Vector2i(room_w / 2, room_h / 2)
@@ -48,8 +49,8 @@ func _generate_room(type: TileType, room_pos: Vector2i):
 				return false
 
 			if not overlap_rooms:
-				var elem = _grid.get_at_veci(test_pos) as TileType
-				if elem == TileType.Room:
+				var elem = _grid.get_at_veci(test_pos) as CellType
+				if elem == CellType.Room:
 					return false
 
 	for i in range(room_w):
@@ -116,8 +117,8 @@ func _generate_corridor():
 	var _desired_corr_len = randi_range(min_corridor_steps, max_corridor_steps)
 
 	for i in range(_desired_corr_len):
-		if _grid.get_at_veci(_current_position) == TileType.None:
-			_grid.set_at_veci(_current_position, TileType.Corridor)
+		if _grid.get_at_veci(_current_position) == CellType.None:
+			_grid.set_at_veci(_current_position, CellType.Corridor)
 		
 		if _random_check(turn_chance):
 			_current_direction = _random_valid_direction(_current_position)
@@ -135,8 +136,8 @@ func _generate_corridor_branching(_start_pos: Vector2i, _start_dir: Vector2i):
 	var _desired_corr_len = randi_range(min_corridor_steps, max_corridor_steps)
 
 	for i in range(_desired_corr_len):
-		if _grid.get_at_veci(_current_position) == TileType.None:
-			_grid.set_at_veci(_current_position, TileType.Corridor)
+		if _grid.get_at_veci(_current_position) == CellType.None:
+			_grid.set_at_veci(_current_position, CellType.Corridor)
 		
 		if _random_check(turn_chance):
 			_current_direction = _random_valid_direction(_current_position )
@@ -154,7 +155,7 @@ func generate() -> Grid2D:
 	_current_direction = Vector2i.UP
 	var desired_rooms = randi_range(min_rooms, max_rooms)
 
-	_generate_room(TileType.Room, _current_position)
+	_generate_room(CellType.Room, _current_position)
 	_num_rooms += 1
 	
 	var iter = 0
@@ -162,7 +163,7 @@ func generate() -> Grid2D:
 		iter += 1
 		_generate_corridor()
 
-		if _generate_room(TileType.Room, _current_position):
+		if _generate_room(CellType.Room, _current_position):
 			_num_rooms += 1
 
 		if _random_check(branch_chance):
@@ -186,7 +187,7 @@ func generate() -> Grid2D:
 			_generate_corridor()
 			
 			iter = 0
-			while not _generate_room(TileType.Room, _current_position) and iter < _max_iter:
+			while not _generate_room(CellType.Room, _current_position) and iter < _max_iter:
 				iter += 1
 				_generate_corridor()
 
