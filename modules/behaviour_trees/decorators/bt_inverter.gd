@@ -1,5 +1,5 @@
 extends BtNode
-class_name BtRepeatUntilFailure
+class_name BtInverter
 
 var _child: BtNode
 
@@ -9,10 +9,12 @@ func _init(child: BtNode) -> void:
 
 func _tick(delta: float) -> Status:
 	var ret = _child._tick(delta)
-	if ret == Status.SUCCESS:
-		_child._abort()
-		return Status.RUNNING
-	return ret
+	if ret == Status.RUNNING:
+		return ret
+		
+	if ret == Status.FAILURE:
+		return Status.SUCCESS
+	return Status.FAILURE
 	
 	
 func _abort():

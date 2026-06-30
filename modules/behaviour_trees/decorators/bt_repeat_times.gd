@@ -1,6 +1,8 @@
 extends BtNode
 class_name BtRepeatTimes
 
+## repeats its child max times, every time child returns SUCCESS increment count, returns FAILURE if child fails
+
 var _child: BtNode
 var _times_repeated: int = 0
 var _times = 0
@@ -17,9 +19,14 @@ func _tick(delta: float) -> Status:
 	if ret == Status.SUCCESS:
 		_times_repeated += 1
 		if _times_repeated >= _times:
+			_times_repeated = 0
 			return Status.SUCCESS
 		_child._abort()
 		return Status.RUNNING
+
+	if ret == Status.FAILURE:
+		_times_repeated = 0
+		return ret
 	return ret
 	
 	

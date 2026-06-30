@@ -2,12 +2,12 @@ extends BtNode
 class_name BtSelectorReactive
 
 var _children: Array[BtNode]
+var _running_child: BtNode = null
 
 
 func _init(children: Array[BtNode]) -> void:
 	_children = children
 
-var _running_child: BtNode = null
 func _tick(delta: float) -> Status:
 	var new_running: BtNode = null
 
