@@ -4,6 +4,18 @@ class_name SpawnUtilities2D
 class SpawnInfo:
 	var position: Vector2
 	var look_direction: Vector2
+	
+
+static func get_circle_spawn_info(count: int, center_pos: Vector2, radius: float, start_angle_deg: float) -> Array[SpawnInfo]:
+	var infos: Array[SpawnInfo] = []
+	var angle_step = (2*PI)/count
+	var start_angle = deg_to_rad(start_angle_deg)
+	for i in count:
+		var info = SpawnInfo.new()
+		info.look_direction = Vector2.from_angle(start_angle + i * angle_step)
+		info.position = center_pos + info.look_direction * radius
+		infos.append(info)
+	return infos
 
 
 static func get_arc_spawn_info(count: int, center_pos: Vector2, radius: float, dir: Vector2, half_angle_deg: float) -> Array[SpawnInfo]:
@@ -30,7 +42,8 @@ static func get_line_spawn_info(count: int, pos_start: Vector2, pos_end: Vector2
 	return infos
 
 
-## given target pos and vel which direction to reach target
+## given target pos and vel which direction to reach target, 
+## if spawn_vel != 0 need to add to bullet velocity as well when spawning
 static func get_reach_target_spawn_info(
 	spawn_pos: Vector2, 
 	spawn_vel: Vector2,
