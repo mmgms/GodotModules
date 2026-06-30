@@ -2,6 +2,7 @@ extends BtNode
 class_name BtRepeatTimes
 
 ## repeats its child max times, every time child returns SUCCESS increment count, returns FAILURE if child fails
+## can pair with inverter for increment count if child fails, returns SUCCESS if child succeds
 
 var _child: BtNode
 var _times_repeated: int = 0
