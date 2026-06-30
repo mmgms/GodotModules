@@ -1,5 +1,5 @@
 extends BtNode
-class_name BtSequence
+class_name BtSelector
 
 var _children: Array[BtNode]
 
@@ -11,15 +11,16 @@ func _init(children: Array[BtNode]) -> void:
 func _tick(delta: float) -> Status:
 	if _current_child_idx >= _children.size():
 		_current_child_idx = 0
-		return Status.SUCCESS
+		return Status.FAILURE
 		
 	var ret = _children[_current_child_idx]._tick(delta)
 	if ret == Status.FAILURE:
-		_current_child_idx = 0
-		return ret
+		_current_child_idx += 1
+		return Status.RUNNING
 
 	if ret == Status.SUCCESS:
-		_current_child_idx += 1
+		_current_child_idx = 0
+		return Status.SUCCESS
 
 
 	return Status.RUNNING

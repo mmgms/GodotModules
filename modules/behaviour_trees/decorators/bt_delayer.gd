@@ -43,4 +43,3 @@ func _abort():
 
 func _get_debug_string() -> String:
 	return _get_debug_decorator(_child)
-
