@@ -1,4 +1,4 @@
-float random(vec2 uv) {
+float random_fmb(vec2 uv) {
     return fract(sin(dot(uv.xy,
         vec2(12.9898,78.233))) *
             43758.5453123);
@@ -9,10 +9,10 @@ float noise(vec2 uv) {
     vec2 uv_fract = fract(uv);
 
     // Four corners in 2D of a tile
-    float a = random(uv_index);
-    float b = random(uv_index + vec2(1.0, 0.0));
-    float c = random(uv_index + vec2(0.0, 1.0));
-    float d = random(uv_index + vec2(1.0, 1.0));
+    float a = random_fmb(uv_index);
+    float b = random_fmb(uv_index + vec2(1.0, 0.0));
+    float c = random_fmb(uv_index + vec2(0.0, 1.0));
+    float d = random_fmb(uv_index + vec2(1.0, 1.0));
 
     vec2 blur = smoothstep(0.0, 1.0, uv_fract);
 

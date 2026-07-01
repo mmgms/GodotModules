@@ -4,7 +4,7 @@ vec2 modulo(vec2 divident, vec2 divisor){
 	return mod(positiveDivident, divisor);
 }
 
-vec2 random_vec2(vec2 value){
+vec2 random_vec2_sp(vec2 value){
 	value = vec2( dot(value, vec2(127.1,311.7) ),
 				  dot(value, vec2(269.5,183.3) ) );
 	return -1.0 + 2.0 * fract(sin(value) * 43758.5453123);
@@ -21,10 +21,10 @@ float seamless_perlin(vec2 uv, vec2 _period, int cell_amount) {
 	
 	vec2 blur = smoothstep(0.0, 1.0, uv_fract);
 	
-	vec2 lowerLeftDirection = random_vec2(vec2(cellsMinimum.x, cellsMinimum.y));
-	vec2 lowerRightDirection = random_vec2(vec2(cellsMaximum.x, cellsMinimum.y));
-	vec2 upperLeftDirection = random_vec2(vec2(cellsMinimum.x, cellsMaximum.y));
-	vec2 upperRightDirection = random_vec2(vec2(cellsMaximum.x, cellsMaximum.y));
+	vec2 lowerLeftDirection = random_vec2_sp(vec2(cellsMinimum.x, cellsMinimum.y));
+	vec2 lowerRightDirection = random_vec2_sp(vec2(cellsMaximum.x, cellsMinimum.y));
+	vec2 upperLeftDirection = random_vec2_sp(vec2(cellsMinimum.x, cellsMaximum.y));
+	vec2 upperRightDirection = random_vec2_sp(vec2(cellsMaximum.x, cellsMaximum.y));
 	
 	vec2 fraction = fract(uv);
 	
