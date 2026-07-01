@@ -1,4 +1,4 @@
-class_name RoomBasedGenerator
+class_name TBOILevelGenerator
 ## binding of isaac level generator, set grid size, num rooms, return GenerationResult with CellData Grid2D
 ## starting pos is center of grid, dead ends are marked in cell data
 

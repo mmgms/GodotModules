@@ -27,7 +27,7 @@ func set_at(x: int, y: int, value: Variant):
 
 
 func is_in_bounds(x: int, y: int) -> bool:
-	return x >= 0 and y >= 0 and x <= _size_x-1 and y <= _size_y-1
+	return x >= 0 and y >= 0 and x <= (_size_x-1) and y <= (_size_y-1)
 
 
 func get_at_veci(vec: Vector2i) -> Variant:
@@ -56,6 +56,14 @@ func get_neighbours_4(pos: Vector2i) -> Array[Vector2i]:
 			neigh.append(pos + dir)
 
 	return neigh
+	
+func get_neighbours_4_no_bounds_check(pos: Vector2i) -> Array[Vector2i]:
+	assert(is_in_bounds_veci(pos))
+	var neigh: Array[Vector2i] = []
+	for dir in _four_dir:
+		neigh.append(pos + dir)
+
+	return neigh
 
 var _eight_dir = [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, 
 	Vector2i.DOWN+Vector2i.LEFT, Vector2i.DOWN+Vector2i.RIGHT,
@@ -73,8 +81,8 @@ func get_neighbours_8(pos: Vector2i) -> Array[Vector2i]:
 
 
 func _data_idx_to_vec2i(idx: int) -> Vector2i:
-	var x = idx / _size_x
-	var y = idx % _size_x
+	var x = idx % _size_x
+	var y = idx / _size_x
 	return Vector2i(x, y)
 
 func _iter_init(iter):
