@@ -3,7 +3,12 @@ class_name TBOIRBTHLevelGenerator
 
 enum CellType {None, Room}
 
-var _rotations = [0, -PI/4, PI,  PI/4]
+var _rotations = [0, -PI/2, PI,  PI/2]
+
+signal room_added(room_info: RoomGeneratedInfo)
+signal door_added_to_queue(doors: Array[Door], room: RoomGeneratedInfo)
+signal generation_complete()
+signal _step()
 
 class CellData:
 	var type: CellType
@@ -71,6 +76,7 @@ class RoomGeneratedInfo:
 var _grid: Grid2D
 
 var num_rooms = 5
+var prob_discard_big_room: float = 0.95
 
 var room_types: Array[RoomGenerationInfo]
 
@@ -78,7 +84,6 @@ var rooms_generated: Array[RoomGeneratedInfo]
 
 var _rooms_available: Array[RoomGenerationInfo]
 
-var _prob_discard_big_room: float = 0.95
 
 func _init(grid_size: Vector2i = Vector2i(10, 10)) -> void:
 	_grid = Grid2D.new(grid_size.x, grid_size.y)
@@ -96,6 +101,10 @@ class Door:
 		to = _to
 
 var _gen_idx = 0
+var step_mode = false
+func step():
+	_step.emit()
+
 func generate() -> GenerationResult:
 	_grid.fill(CellData.new())
 	_rooms_available = room_types.duplicate()
@@ -110,6 +119,10 @@ func generate() -> GenerationResult:
 	_gen_idx += 1
 
 	rooms_generated.append(first_room)
+	room_added.emit(rooms_generated[-1])
+	if step_mode:
+		await _step
+
 	var queue: Array[RoomGeneratedInfo] = [first_room]
 
 	var start_room_data = CellData.new()
@@ -120,13 +133,15 @@ func generate() -> GenerationResult:
 	var _num_rooms = 1
 
 	while queue.size() > 0:
-		var room = queue.pop_back()
+
+		var room = queue.pop_front()
 		var doors_to_check: Array[Door] = []
 
 		if _num_rooms > num_rooms:
 			room.dead_end = true
 			continue
-
+		
+		doors_to_check.clear()
 		if room.is_small:
 			doors_to_check.assign(_grid.get_neighbours_4(room.position)
 				.map(func(to): return Door.new(room.position, to)))
@@ -139,10 +154,16 @@ func generate() -> GenerationResult:
 					))
 				)
 
+		door_added_to_queue.emit(doors_to_check, room)
+		if step_mode:
+			await _step
+
 		var _room_added: bool
 		for door in doors_to_check:
+			var door_to_pos = door.to
 			if not _grid.is_in_bounds_veci(door.to):
 				continue
+
 			var pos_data = _grid.get_at_veci(door.to) as CellData
 			if pos_data.type == CellType.Room:
 				continue
@@ -171,16 +192,22 @@ func generate() -> GenerationResult:
 					rooms_generated.append(new_room)
 					_fill_grid_with_big_room(new_room)
 
-					if randf() < _prob_discard_big_room:
+					if randf() < prob_discard_big_room:
 						_rooms_available.erase(_room_place_attempt.gen_info)
 
 					_num_rooms += 1
+					_room_added = true
 					queue.append(new_room)
+					
+					room_added.emit(rooms_generated[-1])
+					if step_mode:
+						await _step
+						
 					continue
 	
 			var small_room = RoomGeneratedInfo.new()
 			
-			small_room.position = door.to
+			small_room.position = door_to_pos
 			small_room.is_small = true
 			small_room.idx_generated = _gen_idx
 			_gen_idx += 1
@@ -190,18 +217,26 @@ func generate() -> GenerationResult:
 			var small_room_data = CellData.new()
 			small_room_data.type = CellType.Room
 			small_room_data.room = small_room
-			_grid.set_at_veci(door.to, small_room_data)
+			_grid.set_at_veci(door_to_pos, small_room_data)
 
 			_num_rooms += 1
+			_room_added = true
 			queue.append(small_room)
+			
+			room_added.emit(rooms_generated[-1])
+			if step_mode:
+				await _step
 
 
 		if not _room_added:
 			room.dead_end = true
+		
 	
 	var gen_res = GenerationResult.new()
 	gen_res.rooms_generated = rooms_generated
 	gen_res.grid = _grid
+
+	generation_complete.emit()
 
 	return gen_res
 
@@ -215,18 +250,19 @@ func _find_big_room_to_place_at_exit(door_global_space: Door) -> RoomAttemptPlac
 
 	for room_gen_info in _rooms_available:
 		var possible_positions = _get_possible_positions_for_attempt_room(room_gen_info, door_global_space.to)
-		#_rotations.shuffle()
-		for i in range(_rotations.size()):
+		var possible_indices = [0, 1, 2, 3]
+		possible_indices.shuffle()
+		for rot_idx in possible_indices:
 			for position in possible_positions:
 				var attempt_info = RoomAttemptPlaceInfo.new()
 				attempt_info.gen_info = room_gen_info
 				attempt_info.attempt_pos = position
-				attempt_info.attempt_rot = i
+				attempt_info.attempt_rot = rot_idx
 				if room_gen_info.doors\
 					.map(func(door): 
 						return Door.new(
-						position + _get_rotated_veci(door.from.x, door.from.y, i),
-						position + _get_rotated_veci(door.to.x, door.to.y, i),
+						position + _get_rotated_veci(door.from.x, door.from.y, rot_idx),
+						position + _get_rotated_veci(door.to.x, door.to.y, rot_idx),
 					))\
 					.filter(func(room_door_global_space: Door):
 						return room_door_global_space.from == door_global_space.to and \
@@ -257,6 +293,8 @@ func _can_fit(info: RoomAttemptPlaceInfo) -> bool:
 			if not info.gen_info.grid_filled.get_at(i, j):
 				continue
 			var pos_to_check = info.attempt_pos + _get_rotated_veci(i, j, info.attempt_rot)
+			if not _grid.is_in_bounds_veci(pos_to_check):
+				return false
 			if _grid.get_at_veci(pos_to_check).type == CellType.Room:
 				return false
 	return true
@@ -274,5 +312,5 @@ func _fill_grid_with_big_room(room: RoomGeneratedInfo):
 			
 
 func _get_rotated_veci(x, y, rot):
-	var res = Vector2i(Vector2(x, y).rotated(_rotations[rot]))
+	var res = Vector2i(Vector2(x, y).rotated(_rotations[rot]).round())
 	return res
