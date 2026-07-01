@@ -1,5 +1,8 @@
 class_name TBOIRBTHLevelGenerator
 ## binding of isaac rebirth level generator
+## can add RoomGenerationInfo to define big rooms shape, size and doors, 
+## and set callbacks to determine if big rooms should be selected and which room to discard after a big room generation,
+## defaults to always picking big rooms if available and discarding the last generated room with prob_discard_big_room probability
 
 enum CellType {None, Room}
 
@@ -73,23 +76,40 @@ class RoomGeneratedInfo:
 	var rotation: int
 	var idx_generated: int
 
-var _grid: Grid2D
-
 var num_rooms = 5
 var prob_discard_big_room: float = 0.95
 
 var room_types: Array[RoomGenerationInfo]
-
 var rooms_generated: Array[RoomGeneratedInfo]
+
+# (rooms_available, rooms_generated) -> bool
+var _should_pick_big_room_callback: Callable
+
+# (last_generated_room, rooms_generated) -> room_to_discard
+var _room_to_discard_callback: Callable
+var _grid: Grid2D
+
 
 var _rooms_available: Array[RoomGenerationInfo]
 
 
 func _init(grid_size: Vector2i = Vector2i(10, 10)) -> void:
 	_grid = Grid2D.new(grid_size.x, grid_size.y)
+	_should_pick_big_room_callback = func(_available, _generated): return _available.size() > 0
+	_room_to_discard_callback = func(_available, _generated): return _generated[-1].gen_info if randf() < prob_discard_big_room else null
 
 func add_big_room_type(info: RoomGenerationInfo):
 	room_types.append(info)
+	return self
+
+## (available: Array[RoomGenerationInfo], generated: Array[RoomGeneratedInfo])
+func set_should_pick_big_room_callback(cb: Callable):
+	_should_pick_big_room_callback = cb
+	return self
+
+## (available: Array[RoomGenerationInfo], generated: Array[RoomGeneratedInfo])
+func set_room_to_discard_callback(cb: Callable):
+	_room_to_discard_callback = cb
 	return self
 
 class Door:
@@ -137,7 +157,7 @@ func generate() -> GenerationResult:
 		var room = queue.pop_front()
 		var doors_to_check: Array[Door] = []
 
-		if _num_rooms > num_rooms:
+		if _num_rooms >= num_rooms:
 			room.dead_end = true
 			continue
 		
@@ -178,7 +198,7 @@ func generate() -> GenerationResult:
 			if randf() < 0.5:
 				continue
 
-			if _rooms_available.size() > 0:
+			if _rooms_available.size() > 0 and _should_pick_big_room_callback.call(_rooms_available, rooms_generated):
 				var _room_place_attempt = _find_big_room_to_place_at_exit(door)
 				if _room_place_attempt:
 					var new_room = RoomGeneratedInfo.new()
@@ -192,8 +212,9 @@ func generate() -> GenerationResult:
 					rooms_generated.append(new_room)
 					_fill_grid_with_big_room(new_room)
 
-					if randf() < prob_discard_big_room:
-						_rooms_available.erase(_room_place_attempt.gen_info)
+					var room_to_discard = _room_to_discard_callback.call(_rooms_available, rooms_generated)
+					if room_to_discard:
+						_rooms_available.erase(room_to_discard)
 
 					_num_rooms += 1
 					_room_added = true

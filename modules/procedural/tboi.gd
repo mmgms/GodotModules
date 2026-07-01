@@ -38,7 +38,7 @@ func generate() -> GenerationResult:
 	while queue.size() > 0:
 		var pos = queue.pop_back()
 
-		if _num_rooms > num_rooms:
+		if _num_rooms >= num_rooms:
 			_grid.get_at_veci(pos).dead_end = true
 			continue
 
