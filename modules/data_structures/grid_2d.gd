@@ -14,6 +14,19 @@ func _init(size_x: int, size_y: int) -> void:
 	_data = []
 	_data.resize(size_x * size_y)
 
+func duplicate() -> Grid2D:
+	var new_grid = Grid2D.new(_size_x, _size_y)
+	new_grid._data = _data.duplicate_deep()
+	return new_grid
+
+
+func is_on_edge_veci(vec: Vector2i) -> bool:
+	return is_on_edge(vec.x, vec.y)
+
+func is_on_edge(x: int, y: int) -> bool:
+	assert(is_in_bounds(x, y))
+	return x == 0 or y == 0 or x == _size_x-1 or y == _size_y-1
+
 func fill(value: Variant):
 	_data.fill(value)
 	
@@ -78,6 +91,13 @@ func get_neighbours_8(pos: Vector2i) -> Array[Vector2i]:
 
 	return neigh
 
+func get_neighbours_8_no_bounds_check(pos: Vector2i) -> Array[Vector2i]:
+	assert(is_in_bounds_veci(pos))
+	var neigh: Array[Vector2i] = []
+	for dir in _eight_dir:
+		neigh.append(pos + dir)
+
+	return neigh
 
 
 func _data_idx_to_vec2i(idx: int) -> Vector2i:
