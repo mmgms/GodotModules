@@ -158,6 +158,9 @@ func generate() -> GenerationResult:
 		var doors_to_check: Array[Door] = []
 
 		if _num_rooms >= num_rooms:
+			for _room in queue:
+				_room.dead_end = true
+			queue.clear()
 			room.dead_end = true
 			continue
 		
@@ -180,6 +183,8 @@ func generate() -> GenerationResult:
 
 		var _room_added: bool
 		for door in doors_to_check:
+			if _num_rooms >= num_rooms:
+				break
 			var door_to_pos = door.to
 			if not _grid.is_in_bounds_veci(door.to):
 				continue
@@ -195,8 +200,7 @@ func generate() -> GenerationResult:
 			if num_filled_neigh_of_neigh > 1:
 				continue
 
-			if randf() < 0.5:
-				continue
+			
 
 			if _rooms_available.size() > 0 and _should_pick_big_room_callback.call(_rooms_available, rooms_generated):
 				var _room_place_attempt = _find_big_room_to_place_at_exit(door)

@@ -44,6 +44,9 @@ func generate() -> GenerationResult:
 
 		var _room_added: bool
 		for neigh in _grid.get_neighbours_4(pos):
+			if _num_rooms >= num_rooms:
+				break
+				
 			var neigh_info = _grid.get_at_veci(neigh) as CellData
 			if neigh_info.type == CellType.Room:
 				continue
