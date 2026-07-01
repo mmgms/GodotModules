@@ -1,5 +1,5 @@
 class_name CellularAutomataGenerator
-
+## returns Grid2D filled with CellType
 
 signal grid_update(grid: Grid2D)
 signal _step()
@@ -41,7 +41,7 @@ func generate() -> Grid2D:
 		var new_grid = _grid.duplicate()
 		for cell in _grid:
 			var alive_neighbours = _grid.get_neighbours_8_no_bounds_check(cell.point)\
-				.filter(func(x): return not _grid.is_in_bounds_veci(x) or _grid.get_at_veci(x) == CellType.Wall).size()
+				.filter(func(x): return not _grid.is_in_bounds_veci(x) or _grid.get_at_veci(x) == CellType.Wall).size()## out of bound considered wall
 			if cell.data == CellType.Room:
 				if alive_neighbours >= birth_threshold:
 					new_grid.set_at_veci(cell.point, CellType.Wall)
