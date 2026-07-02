@@ -196,8 +196,17 @@ func set_decelerations(ground, air):
 func jump(jump_speed):
 	character.velocity.y = jump_speed
 
+var _last_accelleration: Vector3
+var _last_movement_direction: Vector3
+
+func get_last_accelleration():
+	return _last_accelleration
+	
+func get_last_movement_direction():
+	return _last_movement_direction
 
 func move(delta: float):
+	
 	
 	_hsm.process(delta)
 	
@@ -208,13 +217,17 @@ func move(delta: float):
 
 	var _accel =  acceleration_on_ground if character.is_on_floor() else acceleration_on_air
 	var _decel = deceleration_on_ground if character.is_on_floor() else deceleration_on_air
-
+	
+	var to: Vector3
 	if not movement_direction.is_zero_approx():
-		var to = Vector3(movement_direction.x * base_speed, _movement_velocity.y, movement_direction.y * base_speed)
+		to = Vector3(movement_direction.x * base_speed, _movement_velocity.y, movement_direction.y * base_speed)
 		_movement_velocity = _movement_velocity.move_toward(to, _accel * delta)
 	else:
-		var to = Vector3(0.0, _movement_velocity.y, 0.0)
+		to = Vector3(0.0, _movement_velocity.y, 0.0)
 		_movement_velocity = _movement_velocity.move_toward(to, _decel * delta)
+		
+	_last_accelleration = (to - character.velocity) * _accel * delta
+	_last_movement_direction = Vector3(movement_direction.x, 0.0, movement_direction.y)
 
 
 	character.velocity = _movement_velocity
