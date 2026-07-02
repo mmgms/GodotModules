@@ -9,18 +9,21 @@ class_name SimpleWalker
 @export var hip_target: Node3D
 @export var platfomrer_component: PlatformerMovementComponent3D
 
+@export var curve: Curve
 
 var _rest_hip_position: Vector3
 var _rest_hip_basis: Basis
 func setup():
 	foot_controller_left = FootCotroller.new(true, foot_targetl, main_body, character_body)
 	foot_controller_right = FootCotroller.new(false, foot_targetr, main_body, character_body)
+	foot_controller_left._curve = curve
+	foot_controller_right._curve = curve
 	
 	_rest_hip_position = hip_target.position
 	_rest_hip_basis = hip_target.basis
 
-func update(delta: float, accell: Vector3):
-	_update_lean(delta, accell)
+func update(delta: float):
+	_update_lean(delta)
 	_update_hip(delta)
 	_update_feet(delta)
 	#_update_foot_target(step_update_r, foot_targetr, delta, -1, 1)
@@ -46,22 +49,18 @@ class Damper:
 
 
 var smooth_lean: Damper = Damper.new(Quaternion.IDENTITY, Quaternion.IDENTITY)
-func _update_lean(delta, accell: Vector3):
+func _update_lean(delta):
+	var accell = platfomrer_component.get_last_accelleration()
 	var lean_multi = 8.0#8.0
 	var max_lean_angle = 45.0
 	var lean_smoothing_seconds = 0.25;
 	
 	var target_lean: Quaternion = Quaternion.IDENTITY
 	
-	DebugDraw2D.set_text("accell_len", accell.length())
-	DebugDraw3D.draw_line(main_body.global_position + Vector3.UP, main_body.global_position + Vector3.UP + accell, Color.RED)
-
 	var lean = Vector3.UP.cross(accell)
 	
-	DebugDraw3D.draw_line(main_body.global_position + Vector3.UP, main_body.global_position + Vector3.UP + lean, Color.BLUE)
 
 	var lean_amout = lean.length()
-	DebugDraw2D.set_text("lean_amout", lean_amout)
 	if lean_amout > 0.0:
 	
 		var lean_axis = lean / lean_amout;
@@ -72,13 +71,11 @@ func _update_lean(delta, accell: Vector3):
 	smooth_lean.update( target_lean, lean_smoothing_seconds, delta)
 
 	# note how we multiple on the left because the lean is in world-space
-	DebugDraw2D.set_text("roty", main_body.global_rotation.y)
 	var rot: Quaternion = smooth_lean.val * Basis.from_euler(Vector3(0, main_body.global_rotation.y, 0.0)).get_rotation_quaternion()
 	
-	#DebugDraw2D.set_text("target_lean", rot.get_euler())
 	main_body.global_basis = Basis(rot)
 
-var hip_phase_speed = 4.0
+var hip_phase_speed = 3.5
 var hip_amplitude_damp_seconds = 0.5
 var hip_offset_z = 0.02
 var hip_bias_z = -0.017
@@ -119,8 +116,10 @@ class FootCotroller:
 	var _pinned_pos: Vector3
 	var _is_pinned: bool
 	
-	var step_height: float = 0.5
-	var step_extrap: float = 0.10
+	var step_height: float = 0.45
+	var step_extrap: float = 0.15
+	
+	var _curve: Curve
 	
 	func _init(_is_left: bool, _target: Node3D, main_body: Node3D, character: CharacterBody3D) -> void:
 		is_left = _is_left
