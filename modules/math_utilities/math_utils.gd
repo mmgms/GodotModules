@@ -94,3 +94,11 @@ static func is_point_in_cone3d(point: Vector3, cone_pos: Vector3, cone_dir: Vect
 	var angle_to_target = cone_dir.angle_to(cone_pos.direction_to(point))
 
 	return abs(angle_to_target) < half_angle
+
+# Returns the `vector` with its length capped to `limit`.
+static func clampedv3(vector: Vector3, limit: float) -> Vector3:
+	var length_squared := vector.length_squared()
+	var limit_squared := limit * limit
+	if length_squared > limit_squared:
+		vector *= sqrt(limit_squared / length_squared)
+	return vector

@@ -1,9 +1,9 @@
 extends SteeringBehaviour3D
-class_name SteerinSeek3D
+class_name SteeringSeek3D
 
 var _get_target_position_callback: Callable
 
-## signature () -> Vector2
+## signature () -> Vector3
 func set_target_position_callback(callback: Callable):
 	_get_target_position_callback = callback
 	return self

@@ -1,5 +1,5 @@
 extends SteeringBehaviour2D
-class_name SteerinSeek2D
+class_name SteeringSeek2D
 
 var _get_target_position_callback: Callable
 
