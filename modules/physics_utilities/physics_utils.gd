@@ -186,3 +186,19 @@ func collect_bodies_in_radius_3d(space_state: PhysicsDirectSpaceState3D,
 	
 	bodies.assign(res.map(func(x): return x.collider as PhysicsBody3D))
 	return bodies
+
+# creates and attaches as body_a child a damped spring joint from body_a to body_b
+func create_damped_spring_joint(body_a: PhysicsBody2D, body_b: PhysicsBody2D, rest_length, stiffness=100, damping=1.0, bias=1.0):
+	var joint = DampedSpringJoint2D.new()
+	body_a.add_child(joint)
+	
+	joint.stiffness = stiffness
+	joint.rest_length = rest_length
+	joint.damping = damping
+	joint.bias = bias
+	joint.look_at(body_b.global_position)
+	joint.rotation -= deg_to_rad(90)
+	joint.length = body_a.global_position.distance_to(body_b.global_position)
+
+	joint.node_a = body_a.get_path()
+	joint.node_b = body_b.get_path()
