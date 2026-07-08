@@ -86,3 +86,103 @@ static func check_area_raycast_avoid_static_3d(space_state: PhysicsDirectSpaceSt
 
 	
 	return res.collider as Area3D
+
+
+class RaycastCollisionResult3D:
+	var position: Vector3
+
+# returns null if no collision
+static func check_static_raycast_collision_3d(space_state: PhysicsDirectSpaceState3D, 
+		static_layer: int, 
+		from: Vector3, 
+		to: Vector3) -> Area3D:
+	
+	var raycast_res = RaycastCollisionResult3D.new()
+	var query = PhysicsRayQueryParameters3D.create(from, to) 
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+
+	query.collision_mask = static_layer
+
+	var res = space_state.intersect_ray(query)
+	if res.is_empty():
+		return null
+
+	raycast_res.position = res.position
+	
+	return raycast_res
+
+
+class RaycastCollisionResult2D:
+	var position: Vector2
+
+# returns null if no collision
+static func check_static_raycast_collision_2d(space_state: PhysicsDirectSpaceState2D, 
+		static_layer: int, 
+		from: Vector2, 
+		to: Vector2) -> Area3D:
+	
+	var raycast_res = RaycastCollisionResult2D.new()
+	var query = PhysicsRayQueryParameters2D.create(from, to) 
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+
+	query.collision_mask = static_layer
+
+	var res = space_state.intersect_ray(query)
+	if res.is_empty():
+		return null
+
+	raycast_res.position = res.position
+	
+	return raycast_res
+
+
+
+func collect_bodies_in_radius_2d(space_state: PhysicsDirectSpaceState2D, 
+		position: Vector2,
+		body_layer: int, 
+		radius: float) -> Array[PhysicsBody2D]:
+	
+	var bodies = [] as Array[PhysicsBody2D]
+	var query = PhysicsShapeQueryParameters2D.new()
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+
+	query.collision_mask = body_layer
+
+	query.shape = CircleShape2D.new()
+	query.shape.radius = radius
+	query.transform = Transform2D(0, position)
+
+	var res = space_state.intersect_shape(query)
+	if res.is_empty():
+		return bodies
+	
+	bodies.assign(res.map(func(x): return x.collider as PhysicsBody2D))
+	return bodies
+
+
+
+func collect_bodies_in_radius_3d(space_state: PhysicsDirectSpaceState3D, 
+		position: Vector3,
+		body_layer: int, 
+		radius: float) -> Array[PhysicsBody3D]:
+	
+	var bodies = [] as Array[PhysicsBody3D]
+	var query = PhysicsShapeQueryParameters3D.new()
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+
+	query.collision_mask = body_layer
+
+	query.shape = SphereShape3D.new()
+	query.shape.radius = radius
+	query.transform = Transform3D(Basis.IDENTITY, position)
+
+	var res = space_state.intersect_shape(query)
+	if res.is_empty():
+		return bodies
+	
+	bodies.assign(res.map(func(x): return x.collider as PhysicsBody3D))
+	return bodies
