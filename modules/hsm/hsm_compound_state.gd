@@ -53,7 +53,7 @@ func _on_exit():
 		_exit_callback.call()
 	if _current_running:
 		_current_running._on_exit()
-		_current_running = null
+		#_current_running = null
 
 
 func _get_debug_string() -> String:

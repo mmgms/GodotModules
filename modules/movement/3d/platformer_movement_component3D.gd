@@ -125,6 +125,7 @@ func setup():
 				)
 				.add_transition(HsmTransition.new(_coyote_jump_state, _falling_state)
 									.set_delay(coyote_jump_time))
+				.add_transition(HsmTransition.new(_coyote_jump_state, _jump_cancellable_state, _jump_event))
 
 				.add_transition(HsmTransition.new(_jump_cancellable_state, _jump_confirm_state)
 									.set_delay(max_cancel_jump_time))
