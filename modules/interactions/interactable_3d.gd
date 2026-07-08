@@ -4,8 +4,9 @@ class_name Interactable3D
 var _interaction_callack: Callable
 var _can_interact_callback: Callable
 
-signal interaction_enter(data: InteracterData)
-signal interaction_exit()
+signal interactor_close(data: InteracterData)
+signal interactor_away()
+
 
 class InteracterData:
 	pass
@@ -47,8 +48,9 @@ func interact(data: InteracterData):
 		return
 	_interaction_callack.call(data)
 	
-func enter(data: InteracterData):
-	interaction_enter.emit(data)
+func signal_interacter_close(data: InteracterData):
+	interactor_close.emit(data)
 
-func exit():
-	interaction_exit.emit()
+
+func signal_interacter_away():
+	interactor_away.emit()
