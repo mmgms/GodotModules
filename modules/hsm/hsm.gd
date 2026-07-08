@@ -4,6 +4,7 @@ class_name Hsm
 # call setup to initialize
 # call send_event to send event
 # call process every frame
+# call handle_input to trigger _unhandled_input callbacks
 
 var root_state: HsmState
 
