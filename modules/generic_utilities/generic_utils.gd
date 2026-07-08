@@ -127,3 +127,14 @@ class RequestManager:
 	func handle_request(type: Variant, action: Callable):
 		assert(not request_handlers.has(type))
 		request_handlers[type] = action
+
+
+func center_control_pivot(node: Control):
+	node.pivot_offset_ratio = Vector2(0.5, 0.5)
+
+
+func set_label_override_color(label: Control, color: Color):
+	label.set("theme_override_colors/font_color", color)
+
+func set_progress_bar_override_color(progress_bar: ProgressBar, color: Color):
+	progress_bar.get("theme_override_styles/fill").bg_color = color
