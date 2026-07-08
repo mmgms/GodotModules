@@ -102,3 +102,19 @@ static func clampedv3(vector: Vector3, limit: float) -> Vector3:
 	if length_squared > limit_squared:
 		vector *= sqrt(limit_squared / length_squared)
 	return vector
+	
+
+class TimeSpan:
+	var minutes: int
+	var seconds: int
+
+	func get_string() -> String:
+		return "%d:%02d" % [minutes, seconds]
+
+static func get_timespan(seconds: float) -> TimeSpan:
+	var timespan = TimeSpan.new()
+	timespan.seconds = int(round(seconds)) % 60
+	timespan.minutes = floor(round(seconds)/60)
+	return timespan
+
+	
