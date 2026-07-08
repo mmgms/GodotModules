@@ -1,7 +1,9 @@
 class_name Hsm
 # Simple hierarchical state machine
-# call set_root to set hierarchy and initialize
+# call set_root to set hierarchy 
+# call setup to initialize
 # call send_event to send event
+# call process every frame
 
 var root_state: HsmState
 
@@ -10,8 +12,10 @@ func set_root(state: HsmState):
 	root_state = state
 	root_state._set_hsm(self)
 
-	root_state._enter_first_time()
 	return self
+
+func setup():
+	root_state._enter_first_time()
 
 var _current_transition_to_process: HsmTransition
 
@@ -31,10 +35,22 @@ func send_event(event: StringName):
 					break
 					
 		current_parent = current_parent._parent
+		
+	if _transition_found and _current_transition_to_process._delay == 0.0:
+		var _transition_to_process = _current_transition_to_process
+		
+		_current_transition_to_process = null
+		_transition_to_process._take()
 	
 func _set_transition_to_process(transition: HsmTransition):
 	_transition_time_passed = 0.0
 	_current_transition_to_process = transition
+	if _current_transition_to_process._delay == 0.0:
+		var _transition_to_process = _current_transition_to_process
+		
+		_current_transition_to_process = null
+		_transition_to_process._take()
+
 
 func get_debug_string() -> String:
 	return root_state._get_debug_string()
