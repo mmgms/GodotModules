@@ -15,6 +15,7 @@ class_name ProjectileComponent2D
 
 
 signal hit_static(body: StaticBody2D, position: Vector2, normal: Vector2)
+signal hit_rigid_body(body: RigidBody2D, position: Vector2, normal: Vector2)
 signal hit_hitbox(body: Area2D, position: Vector2)
 signal lifetime_over(position: Vector2)
 
@@ -77,8 +78,12 @@ func move(delta: float):
 
 	var collider = coll.get_collider()
 
-	if collider is StaticBody2D:
+	if collider is StaticBody2D or collider is TileMapLayer:
 		hit_static.emit(collider, coll.get_position(), coll.get_normal())
+		
+	if collider is RigidBody2D:
+		hit_rigid_body.emit(collider, coll.get_position(), coll.get_normal())
+
 
 func _check_hitboxes(pos: Vector2):
 	var areas = PhysicsUtils.collect_areas_in_radius_2d(

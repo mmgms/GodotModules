@@ -15,6 +15,7 @@ class_name ProjectileComponent3D
 
 
 signal hit_static(body: StaticBody3D, position: Vector3, normal: Vector3)
+signal hit_rigid_body(body: RigidBody3D, position: Vector3, normal: Vector3)
 signal hit_hitbox(body: Area2D, position: Vector3)
 signal lifetime_over(position: Vector3)
 
@@ -77,8 +78,11 @@ func move(delta: float):
 
 	var collider = coll.get_collider()
 
-	if collider is StaticBody3D or collider is CSGShape3D:
+	if collider is StaticBody3D or collider is CSGShape3D or collider is GridMap:
 		hit_static.emit(collider, coll.get_position(), coll.get_normal())
+		
+	if collider is RigidBody3D:
+		hit_rigid_body.emit(collider, coll.get_position(), coll.get_normal())
 
 func _check_hitboxes(pos: Vector3):
 	var areas = PhysicsUtils.collect_areas_in_radius_3d(
