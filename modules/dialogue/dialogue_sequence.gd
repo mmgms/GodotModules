@@ -16,8 +16,7 @@ func _set_tree(tree: DialogueTree):
 
 
 func _chosen(choice: String):
-	for child in _children:
-		child._chosen(choice)
+	_children[_current_node_idx]._chosen(choice)
 
 func _reset():
 	_current_node_idx = 0
