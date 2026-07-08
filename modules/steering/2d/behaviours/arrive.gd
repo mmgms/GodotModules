@@ -5,7 +5,7 @@ class_name SteeringArrive2D
 # arrived.
 var arrival_tolerance: float = 0.00
 # Distance from the target for the agent to begin slowing down.
-var deceleration_radius: float = 1.0
+var deceleration_radius: float = 5.0
 # Represents the time it takes to change acceleration.
 var time_to_reach := 0.1
 
