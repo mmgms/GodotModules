@@ -650,7 +650,7 @@ func _swing_internal(node: Node2D, origin: float, degrees: float, dur: float, re
 
 
 # Pulses the node scale in sync with a BPM. Great for music-driven UI or rhythm games.
-func beat_pulse(node: Node2D, bpm: float = 120.0, factor: float = 1.2, repeats: int = 0) -> void:
+func beat_pulse(node: CanvasItem, bpm: float = 120.0, factor: float = 1.2, repeats: int = 0) -> void:
 	if not _is_valid(node):
 		return
 
