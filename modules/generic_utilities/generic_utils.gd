@@ -103,3 +103,27 @@ static func strip_bbcode(source:String) -> String:
 	var regex = RegEx.new()
 	regex.compile("\\[.+?\\]")
 	return regex.sub(source, "", true)
+
+
+static func is_debug_build():
+	return OS.is_debug_build()
+
+
+static func take_screenshoot(node: Node, path: String):
+	var image = node.get_viewport().get_texture().get_image()
+	image.save_png(path)
+
+
+class RequestManager:
+	class LevelRequest:
+		pass
+
+	var request_handlers: Dictionary[Variant, Callable]
+
+	func request(_type: Variant, req: LevelRequest) -> LevelRequest:
+		assert(request_handlers.has(_type))
+		return await request_handlers[_type].call(req)
+
+	func handle_request(type: Variant, action: Callable):
+		assert(not request_handlers.has(type))
+		request_handlers[type] = action
