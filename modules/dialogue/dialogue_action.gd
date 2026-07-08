@@ -7,6 +7,7 @@ func set_callback(cb: Callable):
 	return self
 
 func _step() -> Status:
-	_dialogue_tree._action_taken_callback.call()
+	if _dialogue_tree._action_taken_callback:
+		_dialogue_tree._action_taken_callback.call()
 	callback.call()
 	return Status.Done
