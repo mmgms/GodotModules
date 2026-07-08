@@ -19,6 +19,8 @@ func set_neg_child(child: DialogueNode):
 	neg_child = child
 	return self
 
+func _reset():
+	child_running = null
 
 func _step() -> Status:
 	if child_running:

@@ -45,11 +45,18 @@ func set_root(root: DialogueNode):
 	_root._set_tree(self)
 	return self
 
-
+var is_done: bool
 func step():
+	if is_done:
+		return
 	var status = _root._step()
 	if status == DialogueNode.Status.Done:
 		_over_callback.call()
+		is_done = true
+
+func reset():
+	is_done = false
+	_root._reset()
 
 func choose(option: String):
 	_root._chosen(option)

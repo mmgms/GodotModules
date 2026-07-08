@@ -19,6 +19,9 @@ func _chosen(choice: String):
 	for child in _children:
 		child._chosen(choice)
 
+func _reset():
+	_current_node_idx = 0
+
 
 func _step():
 	var status = _children[_current_node_idx]._step()

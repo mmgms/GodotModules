@@ -6,6 +6,7 @@ class Choice:
 	var node: DialogueNode
 	
 var _choices: Array[Choice]
+var _line: String
 
 func _set_tree(tree: DialogueTree):
 	_dialogue_tree = tree
@@ -21,14 +22,22 @@ func add_choice(choice: String, child: DialogueNode):
 	
 	return self
 
+func set_line(line: String):
+	_line = line
+	return self
+
 var choice_done = false
 var chosen_child: DialogueNode
 
+func _reset():
+	choice_done = false
+	chosen_child = null
 
 func _step():
 	if not chosen_child:
 		var _choices_string = [] as Array[String]
 		_choices_string.assign(_choices.map(func(x): return x.choice))
+		assert(_dialogue_tree._choices_callback !=  null)
 		_dialogue_tree._choices_callback.call(_choices_string)
 		return Status.Running
 
@@ -40,3 +49,6 @@ func _chosen(choice: String):
 	assert(matching.size() == 1)
 
 	chosen_child = matching[0].node
+
+	if _dialogue_tree._line_spoken_callback:
+		_dialogue_tree._line_spoken_callback.call(_line)

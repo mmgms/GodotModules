@@ -12,3 +12,6 @@ func _chosen(choice: String):
 
 func _step() -> Status:
 	return Status.Running
+
+func _reset():
+	pass
