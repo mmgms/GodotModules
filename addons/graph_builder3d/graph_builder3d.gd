@@ -2,8 +2,8 @@
 extends EditorPlugin
 
 
-const GraphNodeGizmo = preload("res://addons/graph_builder3d/graph_node_gizmo.gd")
-const GraphEdgeGizmo = preload("res://addons/graph_builder3d/graph_edge_gizmo.gd")
+const GraphNodeGizmo = preload("graph_node_gizmo.gd")
+const GraphEdgeGizmo = preload("graph_edge_gizmo.gd")
 
 var node_gizmo = GraphNodeGizmo.new()
 var edge_gizmo = GraphEdgeGizmo.new()

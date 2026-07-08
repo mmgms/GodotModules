@@ -19,7 +19,7 @@ func add_node(position: Vector3, cb=null):
 		await get_tree().process_frame
 		nodes_parent.owner = _get_owner()
 	
-	var graph_node = preload("res://addons/graph_builder3d/GraphNode3dScene.tscn").instantiate()
+	var graph_node = preload("GraphNode3dScene.tscn").instantiate()
 	graph_node.name = "GraphNode3D"
 	nodes_parent.add_child(graph_node, true)
 	
@@ -44,7 +44,7 @@ func add_edge(from: GraphNode3D):
 		await get_tree().process_frame
 		edges_parent.owner = _get_owner()
 	
-	var graph_edge = preload("res://addons/graph_builder3d/GraphEdge3dScene.tscn").instantiate()
+	var graph_edge = preload("GraphEdge3dScene.tscn").instantiate()
 	graph_edge.name = "GraphEdge3D"
 	edges_parent.add_child(graph_edge, true)
 	await get_tree().process_frame
