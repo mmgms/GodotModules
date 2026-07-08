@@ -173,6 +173,8 @@ func setup():
 
 		)
 		
+	_hsm.setup()
+		
 var _was_jump_pressed: bool
 
 func set_speed(speed):
