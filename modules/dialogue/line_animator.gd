@@ -14,7 +14,7 @@ var _set_visible_characters_callback: Callable
 var _per_character_callback: Callable
 
 
-# () -> (int)
+# () -> ()
 func set_per_character_callback(cb: Callable):
 	_per_character_callback= cb
 	return self
@@ -56,7 +56,8 @@ func animate(line: String):
 
 	while not _stopped and _get_visible_ratio_callback.call() < 1.0:
 		if bb_code_stripped_line[_current_characters_animated] != " ":
-			_per_character_callback.call()
+			if _per_character_callback:
+				_per_character_callback.call()
 		_current_characters_animated += 1
 		_set_visible_characters_callback.call(_current_characters_animated)
 		await get_tree().create_timer(_time_per_character).timeout
