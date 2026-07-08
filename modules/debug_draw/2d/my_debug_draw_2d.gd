@@ -3,6 +3,9 @@
 
 extends Node2D
 
+func _enter_tree() -> void:
+	z_index = 4096
+
 class DebugPoint:
 	var position: Vector2
 	var color: Color
