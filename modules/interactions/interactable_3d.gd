@@ -6,7 +6,6 @@ var _can_interact_callback: Callable
 
 signal interaction_enter(data: InteracterData)
 signal interaction_exit()
-signal interacted(data: InteracterData)
 
 class InteracterData:
 	pass
@@ -47,7 +46,6 @@ func interact(data: InteracterData):
 	if not _interaction_callack:
 		return
 	_interaction_callack.call(data)
-	interacted.emit(data)
 	
 func enter(data: InteracterData):
 	interaction_enter.emit(data)
