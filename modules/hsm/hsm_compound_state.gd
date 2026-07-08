@@ -77,6 +77,7 @@ func _handle_transition(from: HsmState, target: HsmState):
 		from._on_exit()
 	
 	if target == self:
+		_on_enter()
 		_current_running = _initial_state
 		_initial_state._on_enter()
 		return
@@ -87,7 +88,10 @@ func _handle_transition(from: HsmState, target: HsmState):
 		_current_running = target
 		if not is_from_descendant:
 			_on_enter()
-		target._on_enter()
+		if target is HsmAtomicState:
+			target._on_enter()
+		else:
+			target._handle_transition(from, target)
 		return
 	
 	var next = _get_child_to_if_ancestor(target)
