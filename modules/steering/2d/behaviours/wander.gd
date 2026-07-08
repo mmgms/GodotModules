@@ -1,0 +1,2 @@
+extends SteeringBehaviour2D
+class_name SteeringWander2D
