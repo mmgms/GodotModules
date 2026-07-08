@@ -89,9 +89,7 @@ func collect_visible_targets() -> Array[Area2D]:
 				x.global_position
 			)
 			if area == null or area!= x:
-				MyDebugDraw2d.line(raycast_start_node.global_position, x.global_position, 0.016, Color.RED)
 				return false
-			MyDebugDraw2d.line(raycast_start_node.global_position, x.global_position, 0.016, Color.GREEN)
 			return true
 	)
 	

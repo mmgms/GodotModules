@@ -104,9 +104,7 @@ func collect_visible_targets() -> Array[Area3D]:
 				end_pos
 			)
 			if area == null or area!= x:
-				DebugDraw3D.draw_line(raycast_start_node.global_position, end_pos, Color.RED, 0.016)
 				return false
-			DebugDraw3D.draw_line(raycast_start_node.global_position, end_pos, Color.GREEN, 0.016)
 			return true
 	)
 	
