@@ -3,7 +3,6 @@ extends Node
 class_name ProceduralAnimator
 
 
-@export var character3d: CharacterBody3D
 @export var stride_wheel_radius_run: float = 1.0
 @export var stride_wheel_radius_walk: float = 0.5
 
@@ -30,7 +29,6 @@ class_name ProceduralAnimator
 @export var hip_target_node: Node3D
 @export var ik_target_parent: Node3D
 @export var main_body: Node3D
-@export var platformer_component: PlatformerMovementComponent3D
 
 @export var debug_label: RichTextLabel
 
@@ -211,6 +209,10 @@ func setup():
 			)
 
 	var cubic_interp_state = HsmAtomicState.new().set_name("Cubic")\
+		.set_enter_callback(func():
+			poses_buffer.clear()
+			current_angle = 0
+			)\
 		.set_process_callback(func(delta): 
 			_update_current_velocity()
 			_update_stride_wheel_angle(delta)
@@ -295,8 +297,11 @@ var prev_idx: int
 
 var current_velocity: float
 
+var current_character_speed: float
+var current_character_accelleration: Vector3
+
 func _update_current_velocity():
-	var vel: float = character3d.velocity.length()
+	var vel: float = current_character_speed
 	if Engine.is_editor_hint():
 		vel = editor_vel
 	current_velocity = vel
@@ -369,7 +374,7 @@ func _physics_process(delta: float) -> void:
 func _apply_lean(delta):
 	if Engine.is_editor_hint():
 		return
-	var accell = platformer_component.get_last_accelleration()
+	var accell = current_character_accelleration
 	var lean_multi = 15.0#8.0
 	var max_lean_angle = 45.0
 	var lean_smoothing_seconds = 0.25
