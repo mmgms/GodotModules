@@ -259,7 +259,10 @@ func _build_pose_sequence(pass_pose_r: IkStoredPose3D, reach_pose_r: IkStoredPos
 	var pass_ik_pose_l = _get_simmetric_pose(pass_ik_pose_r)
 	var reach_ik_pose_l = _get_simmetric_pose(reach_ik_pose_r)
 	var poses_seq: Array[IkPose3D] = []
-	poses_seq.assign([pass_ik_pose_r, reach_ik_pose_r, pass_ik_pose_l, reach_ik_pose_l])
+	#poses_seq.assign([pass_ik_pose_r, reach_ik_pose_r, pass_ik_pose_l, reach_ik_pose_l])
+	var arr = [pass_ik_pose_r, reach_ik_pose_r, pass_ik_pose_l, reach_ik_pose_l]
+	arr.reverse()
+	poses_seq.assign(arr)
 	## array of poses
 	return poses_seq
 
