@@ -365,9 +365,17 @@ func _add_hip_bounce():
 	var bounce_offset = (ampl * sin(current_angle * 2) - ampl) * Vector3.UP
 	_current_pose.add_offset(hip_target_node, bounce_offset)
 
+var _pose_modidification_callback
+# (IkPose3D) -> ()
+func set_pose_modification_callback(cb: Callable):
+	_pose_modidification_callback = cb
+	return self
+
 
 func _apply_current_pose():
 	var pose = _current_pose
+	if _pose_modidification_callback:
+		_pose_modidification_callback.call(pose)
 	for node in pose.node_to_transform:
 		var transform = pose.node_to_transform[node]
 		node.transform = transform

@@ -172,6 +172,7 @@ func _reset():
 	var hip = root.get_node("Hip")
 	var neck = hip.get_node("Neck")
 	
+	root.global_position = _get_bone_global_transform(hip_bone_name).origin
 	hip.global_transform = _get_bone_global_transform(hip_bone_name)
 	neck.global_transform = _get_bone_global_transform(neck_bone_name)
 	for s1 in IkLimb.values():
