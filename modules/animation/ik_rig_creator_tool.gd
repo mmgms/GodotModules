@@ -21,6 +21,39 @@ extends Node
 @export_tool_button("Generate") var generation_function = _generate
 @export_tool_button("Reset Ik Nodes Pose") var reset_function = _reset
 
+@export var ik_pose_save_name: String
+@export_tool_button("Save Ik Pose") var save_function = _save
+@export var ik_pose_load_name: String
+@export_tool_button("Load Ik Pose") var load_function = _load
+
+var hand_prefix = "Hand"
+var foot_prefix = "Foot"
+
+var pole_prefix = "Pole"
+var target_prefix = "Target"
+
+var right_suffix = "_R"
+var left_suffix = "_L"
+
+enum IkLimb {Hand, Foot}
+enum IkType {Target, Pole}
+enum IkSide {Right, Left}
+
+func _get_node_name(limb: IkLimb, type: IkType, side: IkSide):
+	var s1 = hand_prefix if limb == IkLimb.Hand else foot_prefix
+	var s2 = pole_prefix if type == IkType.Pole else target_prefix
+	var s3 = right_suffix if side == IkSide.Right else left_suffix
+	return "%s%s%s" % [s1, s2, s3]
+	
+func _get_node(limb: IkLimb, type: IkType, side: IkSide):
+	var root = ik_rig_parent.get_child(0)
+	var hip = root.get_node("Hip")
+	var _name = _get_node_name(limb, type, side)
+	if limb == IkLimb.Hand:
+		return hip.get_node(_name)
+	return root.get_node(_name)
+	
+
 func _get_bone_global_transform(bone_name: String):
 	var b_idx = skeleton_3d.find_bone(bone_name)
 	assert(b_idx >= 0, "bone name %s not found" % bone_name)
@@ -35,6 +68,8 @@ func _generate():
 	
 	for child in ik_rig_parent.get_children():
 		child.queue_free()
+		
+	await  get_tree().process_frame
 	
 	for child in GenericUtils.find_children(skeleton_3d, func(x): return x is SkeletonModifier3D and not x is PhysicalBoneSimulator3D):
 		child.queue_free()
@@ -59,28 +94,28 @@ func _generate():
 	neck.name = "Neck"
 	
 	var rh_target = Node3D.new()
-	rh_target.name = "RHTarget"
+	rh_target.name = _get_node_name(IkLimb.Hand, IkType.Target, IkSide.Right)
 	
 	var lh_target = Node3D.new()
-	lh_target.name = "LHTarget"
+	lh_target.name =  _get_node_name(IkLimb.Hand, IkType.Target, IkSide.Left)
 	
 	var rh_pole = Node3D.new()
-	rh_pole.name = "RHPole"
+	rh_pole.name = _get_node_name(IkLimb.Hand, IkType.Pole, IkSide.Right)
 	
 	var lh_pole = Node3D.new()
-	lh_pole.name = "LHPole"
+	lh_pole.name = _get_node_name(IkLimb.Hand, IkType.Pole, IkSide.Left)
 	
 	var rf_target = Node3D.new()
-	rf_target.name = "RFTarget"
+	rf_target.name = _get_node_name(IkLimb.Foot, IkType.Target, IkSide.Right)
 	
 	var lf_target = Node3D.new()
-	lf_target.name = "LFTarget"
+	lf_target.name = _get_node_name(IkLimb.Foot, IkType.Target, IkSide.Left)
 	
 	var rf_pole = Node3D.new()
-	rf_pole.name = "RFPole"
+	rf_pole.name = _get_node_name(IkLimb.Foot, IkType.Pole, IkSide.Right)
 	
 	var lf_pole = Node3D.new()
-	lf_pole.name = "LFPole"
+	lf_pole.name = _get_node_name(IkLimb.Foot, IkType.Pole, IkSide.Left)
 	
 	ik_rig_parent.add_child(root)
 	root.add_child(hip)
@@ -136,39 +171,36 @@ func _reset():
 	var root = ik_rig_parent.get_child(0)
 	var hip = root.get_node("Hip")
 	var neck = hip.get_node("Neck")
-	var rh_target = hip.get_node("RHTarget")
-	var lh_target = hip.get_node("LHTarget")
-	var rh_pole = hip.get_node("RHPole")
-	var lh_pole = hip.get_node("LHPole")
-	var rf_target = root.get_node("RFTarget")
-	var lf_target = root.get_node("LFTarget")
-	var rf_pole = root.get_node("RFPole")
-	var lf_pole = root.get_node("LFPole")
 	
 	hip.global_transform = _get_bone_global_transform(hip_bone_name)
 	neck.global_transform = _get_bone_global_transform(neck_bone_name)
+	for s1 in IkLimb.values():
+		for s2 in IkType.values():
+			for s3 in IkSide.values():
+				_reset_limb_ik(s1 as IkLimb, s2 as IkType, s3 as IkSide)
 	
-	rh_target.global_transform = _get_bone_global_transform("%s.R" % hand_bone_prefix)
-	lh_target.global_transform = _get_bone_global_transform("%s.L" % hand_bone_prefix)
+func _reset_limb_ik(limb: IkLimb, type: IkType, side: IkSide):
+	var node = _get_node(limb, type, side)
+	var s1 = hand_bone_prefix if limb == IkLimb.Hand else foot_bone_prefix
+	var s2 = ".R" if side == IkSide.Right else ".L"
+	var bone_transform = _get_bone_global_transform("%s%s" %[s1, s2])
+	if type == IkType.Target:
+		node.global_transform = bone_transform
+	else:
+		var offset = Vector3.FORWARD if limb == IkLimb.Hand else - Vector3.FORWARD
+		node.global_position = bone_transform.origin + offset
 	
-	rh_pole.global_position = _get_bone_global_transform("%s.R" % hand_bone_prefix).origin + Vector3.FORWARD
-	lh_pole.global_position = _get_bone_global_transform("%s.L" % hand_bone_prefix).origin + Vector3.FORWARD
-	
-	rf_target.global_transform = _get_bone_global_transform("%s.R" % foot_bone_prefix)
-	lf_target.global_transform = _get_bone_global_transform("%s.L" % foot_bone_prefix)
-	
-	rf_pole.global_position = _get_bone_global_transform("%s.R" % foot_bone_prefix).origin - Vector3.FORWARD
-	lf_pole.global_position = _get_bone_global_transform("%s.L" % foot_bone_prefix).origin - Vector3.FORWARD
 	
 func _add_copy_transform_modifier(mod_name: String, bone_name: StringName, node: Node3D, only_rot: bool = true):
 	var modifier = CopyTransformModifier3D.new()
 	modifier.name = mod_name
 	skeleton_3d.add_child(modifier)
+	await get_tree().process_frame
 	modifier.owner = _get_owner()
 	modifier.set_setting_count(1)
 	modifier.set_apply_bone_name(0, bone_name)
 	modifier.set_reference_type(0, BoneConstraint3D.REFERENCE_TYPE_NODE)
-	modifier.set_reference_node(0, node.get_path())
+	modifier.set_reference_node(0, modifier.get_path_to(node))
 	modifier.set_copy_rotation(0, true)
 	if only_rot:
 		return
@@ -183,6 +215,7 @@ func _add_lr_ik(mod_name: String,
 	var ik = TwoBoneIK3D.new()
 	ik.name = mod_name
 	skeleton_3d.add_child(ik)
+	await get_tree().process_frame
 	ik.owner = _get_owner()
 	ik.set_setting_count(2)
 	
@@ -190,14 +223,43 @@ func _add_lr_ik(mod_name: String,
 	ik.set_middle_bone_name(0, "%s.R" % middle_prefix)
 	ik.set_end_bone_name(0, "%s.R" % end_prefix)
 	
-	ik.set_target_node(0, r_target.get_path())
-	ik.set_pole_node(0, r_pole.get_path())
+	ik.set_target_node(0, ik.get_path_to(r_target))
+	ik.set_pole_node(0, ik.get_path_to(r_pole))
 	
 	ik.set_root_bone_name(1, "%s.L" % root_prefix)
 	ik.set_middle_bone_name(1, "%s.L" % middle_prefix)
 	ik.set_end_bone_name(1, "%s.L" % end_prefix)
 	
-	ik.set_target_node(1, l_target.get_path())
-	ik.set_pole_node(1, l_pole.get_path())
+	ik.set_target_node(1, ik.get_path_to(l_target))
+	ik.set_pole_node(1, ik.get_path_to(l_pole))
 	
+func _get_ik_nodes() -> Array[Node]:
+	var nodes: Array[Node]
+	var root = ik_rig_parent.get_child(0)
+	var hip = root.get_node("Hip")
+	var neck = hip.get_node("Neck")
+	nodes = [root, hip, neck]
+	for s1 in IkLimb.values():
+		for s2 in IkType.values():
+			for s3 in IkSide.values():
+				nodes.append(_get_node(s1 as IkLimb, s2 as IkType, s3 as IkSide))
+	return nodes
+	
+func _save():
+	var new_pose = IkStoredPose3D.new()
+	new_pose.name = ik_pose_save_name
+	var nodes = _get_ik_nodes()
+	for node in nodes:
+		new_pose.node_path_to_transform[ik_rig_parent.get_path_to(node)] = node.transform
+	
+	var rel_path = EditorInterface.get_edited_scene_root().scene_file_path.get_base_dir()
+	ResourceSaver.save(new_pose, "%s/%s.tres" % [rel_path, ik_pose_save_name])
+	
+func _load():
+	var rel_path = EditorInterface.get_edited_scene_root().scene_file_path.get_base_dir()
+	var pose = ResourceLoader.load("%s/%s.tres" % [rel_path, ik_pose_load_name], "", ResourceLoader.CACHE_MODE_IGNORE) as IkStoredPose3D
+	if pose == null:
+		return
+	for elem_path in pose.node_path_to_transform:
+		ik_rig_parent.get_node(elem_path).transform = pose.node_path_to_transform[elem_path]
 	
