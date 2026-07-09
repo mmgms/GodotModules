@@ -15,13 +15,24 @@ class_name ProceduralAnimator
 @export var pass_pose_walk_r: IkStoredPose3D
 @export var reach_pose_walk_r: IkStoredPose3D
 
+@export var crouch_pass_r: IkStoredPose3D
+@export var crouch_reach_r: IkStoredPose3D
+
 @export var idle_pose: IkStoredPose3D
+@export var crouch_pose: IkStoredPose3D
+
+@export var jump_pose: IkStoredPose3D
+@export var fall_pose: IkStoredPose3D
+
+@export var roll_pose: IkStoredPose3D
 
 
 @export var hip_target_node: Node3D
 @export var ik_target_parent: Node3D
 @export var main_body: Node3D
 @export var platformer_component: PlatformerMovementComponent3D
+
+@export var debug_label: RichTextLabel
 
 @export_tool_button("Start") var start_fun = func(): setup(); _enabled = true
 @export_tool_button("Stop") var stop_fun = func(): _enabled = false
@@ -34,6 +45,7 @@ var lean_interpolator: AnimationUtilities.SecondOrderDynamics
 
 var poses_sequence_run: Array[IkPose3D]
 var poses_sequence_walk: Array[IkPose3D]
+var pose_sequence_crouch_walk: Array[IkPose3D]
 
 
 var idle_event = "Idle"
@@ -50,9 +62,10 @@ class InterpolationInfo:
 
 	func _init(_node: Node3D) -> void:
 		node = _node
-		var f = 1.5
+		var f = 2
 		var z = 1
-		interpolator_pos = AnimationUtilities.SecondOrderDynamics.new(node.position, Vector3.ZERO).set_parameters(f, z, 0)
+		var r = 1.5
+		interpolator_pos = AnimationUtilities.SecondOrderDynamics.new(node.position, Vector3.ZERO).set_parameters(f, z, r)
 		interpolator_rot = AnimationUtilities.SecondOrderDynamics.new(
 			node.transform.basis.get_rotation_quaternion(), Quaternion.IDENTITY).set_parameters(f, z, 0)
 
@@ -76,23 +89,28 @@ class IkPose3D:
 			node_to_transform[node] = node.transform
 			node_to_interpolation_info[node] = info
 
-	func update(delta: float, target: IkPose3D):
+	func reset_interpolator():
+		for node in node_to_transform.keys():
+			var info = InterpolationInfo.new(node)
+			node_to_interpolation_info[node] = info
+
+	func update_spring_interpolator(delta: float, target: IkPose3D):
 		for node in node_to_transform:
 			node_to_interpolation_info[node]._update(delta, target.node_to_transform[node])
 			node_to_transform[node] = node_to_interpolation_info[node].get_updated_transform()
 
-	func get_interpolated_pose(next_pose: IkPose3D, result: IkPose3D, delta: float):
-		for node in node_to_transform:
-			var start_trans = node_to_transform[node]
-			var next_trans = next_pose.node_to_transform[node]
+	# func get_interpolated_pose(next_pose: IkPose3D, result: IkPose3D, delta: float):
+	# 	for node in node_to_transform:
+	# 		var start_trans = node_to_transform[node]
+	# 		var next_trans = next_pose.node_to_transform[node]
 
-			var new_transform = Transform3D()
+	# 		var new_transform = Transform3D()
 
-			new_transform.basis = Basis(start_trans.basis.get_rotation_quaternion()
-									.slerp(next_trans.basis.get_rotation_quaternion(), ease(delta, 2)))
-			new_transform.origin = start_trans.origin.lerp(next_trans.origin, ease(delta, 2))
+	# 		new_transform.basis = Basis(start_trans.basis.get_rotation_quaternion()
+	# 								.slerp(next_trans.basis.get_rotation_quaternion(), ease(delta, 2)))
+	# 		new_transform.origin = start_trans.origin.lerp(next_trans.origin, ease(delta, 2))
 
-			result.node_to_transform[node] = new_transform
+	# 		result.node_to_transform[node] = new_transform
 			
 	func add_offset(node:Node3D, offset: Vector3):
 		assert(node_to_transform.has(node))
@@ -113,9 +131,60 @@ func get_cubic_interpolated_pose(values: Array[IkPose3D], res: IkPose3D, delta: 
 
 var _current_pose: IkPose3D
 
+enum InterpolationMode {Cubic, Spring}
+enum PoseTarget {Idle, Crouch, Roll, Fall, Jump}
+
+var enable_lean: bool = true
+
+var pose_target: PoseTarget:
+	set(val):
+		pose_target = val
+		if pose_target == PoseTarget.Idle:
+			_target_pose_for_spring_interp = idle_ik_pose
+		elif pose_target == PoseTarget.Crouch:
+			_target_pose_for_spring_interp = crouch_ik_pose
+		elif pose_target == PoseTarget.Roll:
+			_target_pose_for_spring_interp = roll_ik_pose
+		elif pose_target == PoseTarget.Fall:
+			_target_pose_for_spring_interp = fall_ik_pose
+		elif pose_target == PoseTarget.Jump:
+			_target_pose_for_spring_interp = jump_ik_pose
+
+var interpolation_mode: InterpolationMode:
+	set(val):
+		interpolation_mode = val
+		if interpolation_mode == InterpolationMode.Cubic:
+			hsm.send_event(cubic_interp_event)
+		else:
+			hsm.send_event(spring_inter_event)
+
+var is_crouching: bool
+
+
+var idle_ik_pose
+var crouch_ik_pose
+
+var jump_ik_pose
+var fall_ik_pose
+var roll_ik_pose
+
+var _target_pose_for_spring_interp
+
+var spring_inter_event = "Spring"
+var cubic_interp_event = "Cubic"
+
 func setup():
 	poses_sequence_run = _build_pose_sequence(pass_pose_r, reach_pose_r)
 	poses_sequence_walk = _build_pose_sequence(pass_pose_walk_r, reach_pose_walk_r)
+	
+	pose_sequence_crouch_walk = _build_pose_sequence(crouch_pass_r, crouch_reach_r)
+
+	idle_ik_pose = _convert_stored_to_ik_pose(idle_pose)
+	crouch_ik_pose = _convert_stored_to_ik_pose(crouch_pose)
+	
+	jump_ik_pose = _convert_stored_to_ik_pose(jump_pose)
+	fall_ik_pose = _convert_stored_to_ik_pose(fall_pose)
+	roll_ik_pose = _convert_stored_to_ik_pose(roll_pose)
 	
 	_current_pose = IkPose3D.new()
 	
@@ -128,18 +197,37 @@ func setup():
 	lean_interpolator = AnimationUtilities.SecondOrderDynamics.new(Quaternion.IDENTITY, Quaternion.IDENTITY)\
 		.set_smooth_damp().set_parameters(1.5, 1, 0)
 
-	var idle_state = HsmAtomicState.new().set_name("Idle")
-	var moving_state = HsmAtomicState.new().set_name("Moving")\
+	var spring_interp_state = HsmAtomicState.new().set_name("Spring")\
+		.set_enter_callback(func():
+			poses_buffer.clear()
+			_current_pose.reset_interpolator()
+			)\
 		.set_process_callback(func(delta): 
-			update_moving(delta)
-			
+			_update_current_velocity()
+			_spring_interpolate_pose_towards(delta, _target_pose_for_spring_interp)
+			_apply_current_pose()
+			if enable_lean:
+				_apply_lean(delta)
 			)
+
+	var cubic_interp_state = HsmAtomicState.new().set_name("Cubic")\
+		.set_process_callback(func(delta): 
+			_update_current_velocity()
+			_update_stride_wheel_angle(delta)
+			_update_buffer_moving(delta)
+			_cubic_interpolate_buffer_with_angle()
+			_add_hip_bounce()
+			_apply_current_pose()
+			if enable_lean:
+				_apply_lean(delta)
+			)
+
 	hsm = Hsm.new()
 	hsm.set_root(HsmCompoundState.new()
-		.add_child(idle_state)
-		.add_child(moving_state)
-		.add_transition(HsmTransition.new(idle_state, moving_state, moving_event))
-		.add_transition(HsmTransition.new(moving_state, idle_state, idle_event))
+		.add_child(spring_interp_state)
+		.add_child(cubic_interp_state)
+		.add_transition(HsmTransition.new(spring_interp_state, cubic_interp_state, cubic_interp_event))
+		.add_transition(HsmTransition.new(cubic_interp_state, spring_interp_state, spring_inter_event))
 		)
 	hsm.setup()
 
@@ -198,64 +286,74 @@ var current_angle: float
 var stride_wheel_radius: float = stride_wheel_radius_walk
 var stride_wheel_change_speed: float = 2.0
 
+func update(delta):
+	debug_label.text = hsm.get_debug_string()
+	hsm.process(delta)
+
 var poses_buffer: Array[IkPose3D]
 var prev_idx: int
-func update_moving(delta: float):
+
+var current_velocity: float
+
+func _update_current_velocity():
 	var vel: float = character3d.velocity.length()
 	if Engine.is_editor_hint():
 		vel = editor_vel
+	current_velocity = vel
 
-	if vel < walk_threshold:
+
+func _update_stride_wheel_angle(delta):
+
+	if current_velocity < walk_threshold:
 		stride_wheel_radius = move_toward(stride_wheel_radius, stride_wheel_radius_walk, delta * stride_wheel_change_speed)
 	else:
 		stride_wheel_radius = move_toward(stride_wheel_radius, stride_wheel_radius_run, delta * stride_wheel_change_speed)
 	
-	var angular_speed = vel/stride_wheel_radius
+	var angular_speed = current_velocity/stride_wheel_radius
 	current_angle = wrapf(current_angle + angular_speed * delta, 0, TAU)
 
-	
+func _update_buffer_moving(delta: float):
+
 	var current_sequence: Array
-	if vel < walk_threshold:
+	if current_velocity < walk_threshold:
 		current_sequence = poses_sequence_walk
 	else:
 		current_sequence = poses_sequence_run
+		
+	if is_crouching:
+		current_sequence = pose_sequence_crouch_walk
 
 	if poses_buffer.is_empty():
 		poses_buffer.assign(current_sequence)
-		
 
 	var current_index = floori(current_angle/TAU * poses_sequence_run.size())
 	if current_index != prev_idx:
 		poses_buffer.pop_front()
 		poses_buffer.append(current_sequence[current_index])
 		prev_idx = current_index
-
-	DebugDraw2D.set_text("current_index", current_index)
-	DebugDraw2D.set_text("prev_idx", prev_idx)
-	# var next_pose = current_sequence[current_index]
-	# var prev_pose = current_sequence[prev_idx]
-	
-	# var vprev_prev = current_sequence[wrapi(prev_idx -1, 0, poses_sequence_run.size())]
-	# var vnext_next = current_sequence[wrapi(current_index +1, 0, poses_sequence_run.size())]
-	# var values: Array[IkPose3D] = []
-	# values.assign([vprev_prev, prev_pose, next_pose, vnext_next])
-
-
+		
+func _cubic_interpolate_buffer_with_angle():
 	var current_weight = fposmod(current_angle/TAU*poses_sequence_run.size(), 1)
-	DebugDraw2D.set_text("current_weight", current_weight)
+	#DebugDraw2D.set_text("current_weight", current_weight)
 	#prev_pose.get_interpolated_pose(next_pose, _current_pose, current_weight)
 	get_cubic_interpolated_pose(poses_buffer, _current_pose, current_weight)
-	var ampl = min(0.1/(vel + 0.01), 0.1)
+
+func _spring_interpolate_pose_towards(delta: float, target: IkPose3D):
+	_current_pose.update_spring_interpolator(delta, target)
+
+func _add_hip_bounce():
+	var ampl = min(0.1/(current_velocity + 0.01), 0.1)
+
 	var bounce_offset = (ampl * sin(current_angle * 2) - ampl) * Vector3.UP
 	_current_pose.add_offset(hip_target_node, bounce_offset)
-	_apply_pose(_current_pose)
-	DebugDraw2D.set_text("bounce_ampl", ampl)
+
+	#DebugDraw2D.set_text("bounce_ampl", ampl)
 	#ik_target_parent.position.y = ampl * sin(current_angle * 2)
 	
-	_apply_lean(delta)
 
 
-func _apply_pose(pose: IkPose3D):
+func _apply_current_pose():
+	var pose = _current_pose
 	for node in pose.node_to_transform:
 		var transform = pose.node_to_transform[node]
 		node.transform = transform
@@ -265,7 +363,7 @@ func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		if not _enabled:
 			return
-		update_moving(delta)
+		hsm.process(delta)
 		
 
 func _apply_lean(delta):

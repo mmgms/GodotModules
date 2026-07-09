@@ -2,6 +2,8 @@ extends Node
 class_name PlatformerMovementComponent3D
 ## simple platformer call setup to initialize
 
+signal grounded()
+signal airborne()
 
 @export var character: CharacterBody3D
 
@@ -57,6 +59,7 @@ func setup():
 		HsmAtomicState.new()
 				.set_name("Grounded")
 				.set_enter_callback(func():
+					grounded.emit()
 					pass)
 				.set_process_callback(func(_delta):
 					if not character.is_on_floor():
@@ -136,6 +139,7 @@ func setup():
 				.add_transition(HsmTransition.new(_jump_confirm_state, _falling_state, _falling_event))
 					
 				.set_enter_callback(func(): 
+					airborne.emit()
 					_current_jump_counter = 0)
 				.set_process_callback(func(_delta): if character.is_on_floor():
 					_hsm.send_event(_land_event))
