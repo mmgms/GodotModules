@@ -95,7 +95,7 @@ class RaycastCollisionResult3D:
 static func check_static_raycast_collision_3d(space_state: PhysicsDirectSpaceState3D, 
 		static_layer: int, 
 		from: Vector3, 
-		to: Vector3) -> Area3D:
+		to: Vector3) -> RaycastCollisionResult3D:
 	
 	var raycast_res = RaycastCollisionResult3D.new()
 	var query = PhysicsRayQueryParameters3D.create(from, to) 
@@ -120,7 +120,7 @@ class RaycastCollisionResult2D:
 static func check_static_raycast_collision_2d(space_state: PhysicsDirectSpaceState2D, 
 		static_layer: int, 
 		from: Vector2, 
-		to: Vector2) -> Area3D:
+		to: Vector2) -> RaycastCollisionResult2D:
 	
 	var raycast_res = RaycastCollisionResult2D.new()
 	var query = PhysicsRayQueryParameters2D.create(from, to) 
