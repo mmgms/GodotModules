@@ -404,51 +404,58 @@ func set_get_target_position_look_at_hip(cb):
 	return self
 
 var primary_limit_angle_neck_deg: float = 45
-var secondary_limit_angle_neck_deg: float = 60
+var secondary_limit_angle_neck_deg: float = 45
 
 var primary_limit_angle_hip_deg: float = 45
-var secondary_limit_angle_hip_deg: float = 5
+var secondary_limit_angle_hip_deg: float = 0
+
+func _apply_look_at(delta, pos: Vector3, node: Node3D,
+		interpolator: AnimationUtilities.SecondOrderDynamics, target_pose: IkPose3D,
+		prim_limit_deg: float, sec_limit_deg: float, relative=false):
+
+	## compute target trasform
+	var original_transform = target_pose.node_to_transform[node]
+
+	var original_transform_global = node.get_parent().global_transform * original_transform
+
+	#var global_transform = neck_ik_node.global_transform
+	var local_space_pos = original_transform_global.inverse() * pos
+
+	var yz_plane_proj: Vector3 = local_space_pos * Vector3(0, 1, 1)
+	var xz_plane_proj: Vector3 = local_space_pos * Vector3(1, 0, 1)
+
+	var primary_angle_target = xz_plane_proj.signed_angle_to(Vector3.BACK, Vector3.UP)
+	var secondary_angle_target = yz_plane_proj.signed_angle_to(Vector3.BACK, Vector3.RIGHT)
+
+	var prim_limit = deg_to_rad(prim_limit_deg)
+	var sec_limit = deg_to_rad(sec_limit_deg)
+
+	primary_angle_target = clamp(primary_angle_target, -prim_limit, prim_limit)
+	secondary_angle_target = clamp(secondary_angle_target, -sec_limit, sec_limit)
+
+
+	var clamped_target = Vector3.BACK.rotated(Vector3.UP, -primary_angle_target).rotated(Vector3.RIGHT, -secondary_angle_target)
+
+	var local_space_target = Basis.looking_at(clamped_target, Vector3.UP, true).get_rotation_quaternion()
+	## interpolate with damp spring
+
+	interpolator.update(delta, local_space_target)
+
+	if not relative:
+		target_pose.node_to_transform[node].basis = Basis(interpolator.y)
+	else:
+		target_pose.node_to_transform[node].basis *= Basis(interpolator.y)
 
 func _apply_target_modifications(delta, target_pose: IkPose3D):
 	if _get_target_position_look_at_head:
 		var pos = _get_target_position_look_at_head.call()
-		## compute target trasform
-		var original_transform = _target_pose_for_spring_interp.node_to_transform[neck_ik_node]
-
-		var original_transform_global = hip_ik_node.global_transform * original_transform
-
-		#var global_transform = neck_ik_node.global_transform
-		var local_space_pos = original_transform_global.inverse() * pos
-
-		var yz_plane_proj: Vector3 = local_space_pos * Vector3(0, 1, 1)
-		var xz_plane_proj: Vector3 = local_space_pos * Vector3(1, 0, 1)
-
-		var primary_angle_target = xz_plane_proj.signed_angle_to(Vector3.BACK, Vector3.UP)
-		var secondary_angle_target = yz_plane_proj.signed_angle_to(Vector3.BACK, Vector3.RIGHT)
-
-		var prim_limit = deg_to_rad(primary_limit_angle_neck_deg)
-		var sec_limit = deg_to_rad(secondary_limit_angle_neck_deg)
-
-		primary_angle_target = clamp(primary_angle_target, -prim_limit, prim_limit)
-		secondary_angle_target = clamp(secondary_angle_target, -sec_limit, sec_limit)
-
-		var clamped_target = Vector3.BACK.rotated(Vector3.UP, -primary_angle_target).rotated(Vector3.RIGHT, -secondary_angle_target)
-		
-		var local_space_target = Basis.looking_at(clamped_target, Vector3.UP, true).get_rotation_quaternion()
-		## interpolate with damp spring
-		neck_rot_interpolator.update(delta, local_space_target)
-
-		target_pose.node_to_transform[neck_ik_node].basis = Basis(neck_rot_interpolator.y)
+		_apply_look_at(delta, pos, neck_ik_node, neck_rot_interpolator, target_pose, 
+			primary_limit_angle_neck_deg, secondary_limit_angle_neck_deg)
 
 	if _get_target_position_look_at_hip:
 		var pos = _get_target_position_look_at_hip.call()
-		## compute target trasform
-		var local_space_pos = hip_ik_node.global_transform.inverse() * pos
-		var target = Basis.looking_at(local_space_pos, Vector3.UP, true).get_rotation_quaternion()
-		## interpolate with damp spring
-		hip_rot_interpolator.update(delta, target)
-
-		target_pose.node_to_transform[hip_ik_node].basis = Basis(hip_rot_interpolator.y)
+		_apply_look_at(delta, pos, hip_ik_node, hip_rot_interpolator, target_pose, 
+			primary_limit_angle_hip_deg, secondary_limit_angle_hip_deg, true)
 
 
 func _apply_current_pose(delta):
