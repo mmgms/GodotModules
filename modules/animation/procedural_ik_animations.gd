@@ -424,22 +424,7 @@ func _apply_look_at(delta, pos: Vector3, node: Node3D,
 	#var global_transform = neck_ik_node.global_transform
 	var local_space_pos = original_transform_global.inverse() * pos
 
-	var yz_plane_proj: Vector3 = local_space_pos * Vector3(0, 1, 1)
-	var xz_plane_proj: Vector3 = local_space_pos * Vector3(1, 0, 1)
-
-	var primary_angle_target = xz_plane_proj.signed_angle_to(Vector3.BACK, Vector3.UP)
-	var secondary_angle_target = yz_plane_proj.signed_angle_to(Vector3.BACK, Vector3.RIGHT)
-
-	var prim_limit = deg_to_rad(prim_limit_deg)
-	var sec_limit = deg_to_rad(sec_limit_deg)
-
-	primary_angle_target = clamp(primary_angle_target, -prim_limit, prim_limit)
-	secondary_angle_target = clamp(secondary_angle_target, -sec_limit, sec_limit)
-
-
-	var clamped_target = Vector3.BACK.rotated(Vector3.UP, -primary_angle_target).rotated(Vector3.RIGHT, -secondary_angle_target)
-
-	var local_space_target = Basis.looking_at(clamped_target, Vector3.UP, true).get_rotation_quaternion()
+	var local_space_target = MathUtils.get_look_at_transform_limited(local_space_pos, prim_limit_deg, sec_limit_deg)
 	## interpolate with damp spring
 
 	interpolator.update(delta, local_space_target)

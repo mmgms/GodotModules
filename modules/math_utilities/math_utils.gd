@@ -118,3 +118,23 @@ static func get_timespan(seconds: float) -> TimeSpan:
 	return timespan
 
 	
+## assumes we want the z axis to look at target pos
+static func get_look_at_transform_limited(local_space_pos: Vector3, prim_limit_deg: float, sec_limit_deg: float, ):
+
+	var yz_plane_proj: Vector3 = local_space_pos * Vector3(0, 1, 1)
+	var xz_plane_proj: Vector3 = local_space_pos * Vector3(1, 0, 1)
+
+	var primary_angle_target = xz_plane_proj.signed_angle_to(Vector3.BACK, Vector3.UP)
+	var secondary_angle_target = yz_plane_proj.signed_angle_to(Vector3.BACK, Vector3.RIGHT)
+
+	var prim_limit = deg_to_rad(prim_limit_deg)
+	var sec_limit = deg_to_rad(sec_limit_deg)
+
+	primary_angle_target = clamp(primary_angle_target, -prim_limit, prim_limit)
+	secondary_angle_target = clamp(secondary_angle_target, -sec_limit, sec_limit)
+
+	var clamped_target = Vector3.BACK.rotated(Vector3.UP, -primary_angle_target).rotated(Vector3.RIGHT, -secondary_angle_target)
+
+	var local_space_target = Basis.looking_at(clamped_target, Vector3.UP, true).get_rotation_quaternion()
+
+	return local_space_target
