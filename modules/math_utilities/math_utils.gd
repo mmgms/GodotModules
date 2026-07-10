@@ -119,7 +119,7 @@ static func get_timespan(seconds: float) -> TimeSpan:
 
 	
 ## assumes we want the z axis to look at target pos
-static func get_look_at_transform_limited(local_space_pos: Vector3, prim_limit_deg: float, sec_limit_deg: float, ):
+static func get_look_at_basis_limited(local_space_pos: Vector3, prim_limit_deg: float, sec_limit_deg: float) -> Basis:
 
 	var yz_plane_proj: Vector3 = local_space_pos * Vector3(0, 1, 1)
 	var xz_plane_proj: Vector3 = local_space_pos * Vector3(1, 0, 1)
@@ -135,6 +135,6 @@ static func get_look_at_transform_limited(local_space_pos: Vector3, prim_limit_d
 
 	var clamped_target = Vector3.BACK.rotated(Vector3.UP, -primary_angle_target).rotated(Vector3.RIGHT, -secondary_angle_target)
 
-	var local_space_target = Basis.looking_at(clamped_target, Vector3.UP, true).get_rotation_quaternion()
+	var basis = Basis.looking_at(clamped_target, Vector3.UP, true)
 
-	return local_space_target
+	return basis

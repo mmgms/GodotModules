@@ -424,7 +424,7 @@ func _apply_look_at(delta, pos: Vector3, node: Node3D,
 	#var global_transform = neck_ik_node.global_transform
 	var local_space_pos = original_transform_global.inverse() * pos
 
-	var local_space_target = MathUtils.get_look_at_transform_limited(local_space_pos, prim_limit_deg, sec_limit_deg)
+	var local_space_target = MathUtils.get_look_at_basis_limited(local_space_pos, prim_limit_deg, sec_limit_deg).get_rotation_quaternion()
 	## interpolate with damp spring
 
 	interpolator.update(delta, local_space_target)
