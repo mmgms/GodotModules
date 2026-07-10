@@ -26,8 +26,8 @@ class_name ProceduralAnimator
 
 @export var roll_pose: IkStoredPose3D
 
-
-@export var hip_target_node: Node3D
+@export var neck_ik_node: Node3D
+@export var hip_ik_node: Node3D
 @export var ik_target_parent: Node3D
 @export var main_body: Node3D
 
@@ -40,6 +40,9 @@ class_name ProceduralAnimator
 var cubic_interpolator: AnimationUtilities.CubicInterpolator
 
 var lean_interpolator: AnimationUtilities.SecondOrderDynamics
+
+var neck_rot_interpolator: AnimationUtilities.SecondOrderDynamics
+var hip_rot_interpolator: AnimationUtilities.SecondOrderDynamics
 
 var poses_sequence_run: Array[IkPose3D]
 var poses_sequence_walk: Array[IkPose3D]
@@ -75,6 +78,11 @@ class IkPose3D:
 	var node_to_transform: Dictionary[Node3D, Transform3D]
 
 	var node_to_interpolation_info: Dictionary[Node3D, InterpolationInfo]
+
+	func duplicate() -> IkPose3D:
+		var new = IkPose3D.new()
+		new.node_to_transform = node_to_transform.duplicate()
+		return new
 
 	func setup(nodes: Array[Node3D]):
 		for node in nodes:
@@ -181,7 +189,7 @@ var jump_ik_pose
 var fall_ik_pose
 var roll_ik_pose
 
-var _target_pose_for_spring_interp
+var _target_pose_for_spring_interp: IkPose3D
 
 var spring_inter_event = "Spring"
 var cubic_interp_event = "Cubic"
@@ -209,6 +217,12 @@ func setup():
 
 	lean_interpolator = AnimationUtilities.SecondOrderDynamics.new(Quaternion.IDENTITY, Quaternion.IDENTITY)\
 		.set_smooth_damp().set_parameters(1.5, 1, 0)
+	
+	neck_rot_interpolator = AnimationUtilities.SecondOrderDynamics.new(Quaternion.IDENTITY, Quaternion.IDENTITY)\
+		.set_smooth_damp()
+	
+	hip_rot_interpolator = AnimationUtilities.SecondOrderDynamics.new(Quaternion.IDENTITY, Quaternion.IDENTITY)\
+		.set_smooth_damp()
 
 	var spring_interp_state = HsmAtomicState.new().set_name("Spring")\
 		.set_enter_callback(func():
@@ -218,8 +232,8 @@ func setup():
 			)\
 		.set_process_callback(func(delta): 
 			_update_current_velocity()
-			_spring_interpolate_pose_towards(delta, _target_pose_for_spring_interp)
-			_apply_current_pose()
+			_spring_interpolate_pose(delta)
+			_apply_current_pose(delta)
 			if enable_lean:
 				_apply_lean(delta)
 			)
@@ -236,7 +250,7 @@ func setup():
 			_update_buffer_moving(delta)
 			_cubic_interpolate_buffer_with_angle(delta)
 			_add_hip_bounce()
-			_apply_current_pose()
+			_apply_current_pose(delta)
 			if enable_lean:
 				_apply_lean(delta)
 			)
@@ -357,28 +371,91 @@ func _update_buffer_moving(delta: float):
 func _cubic_interpolate_buffer_with_angle(delta):
 	var current_weight = fposmod(current_angle/TAU*poses_sequence_run.size(), 1)
 	var target = get_cubic_interpolated_pose(poses_buffer, current_weight)
+	_apply_target_modifications(delta, target)
 	_current_pose.update_spring_interpolator(delta, target)
 
-func _spring_interpolate_pose_towards(delta: float, target: IkPose3D):
+func _spring_interpolate_pose(delta: float):
+	var target = _target_pose_for_spring_interp.duplicate()
+	_apply_target_modifications(delta, target)
 	_current_pose.update_spring_interpolator(delta, target)
 
 func _add_hip_bounce():
 	var ampl = min(0.1/(current_velocity + 0.01), 0.1)
 
 	var bounce_offset = (ampl * sin(current_angle * 2) - ampl) * Vector3.UP
-	_current_pose.add_offset(hip_target_node, bounce_offset)
+	_current_pose.add_offset(hip_ik_node, bounce_offset)
 
-var _pose_modidification_callback
+var _pose_modification_callback
 # (IkPose3D) -> ()
-func set_pose_modification_callback(cb: Callable):
-	_pose_modidification_callback = cb
+func set_pose_modification_callback(cb):
+	_pose_modification_callback = cb
 	return self
 
+var _get_target_position_look_at_head
+# (IkPose3D) -> ()
+func set_get_target_position_look_at_head(cb):
+	_get_target_position_look_at_head = cb
+	return self
 
-func _apply_current_pose():
+var _get_target_position_look_at_hip
+# (IkPose3D) -> ()
+func set_get_target_position_look_at_hip(cb):
+	_get_target_position_look_at_hip = cb
+	return self
+
+var primary_limit_angle_neck_deg: float = 45
+var secondary_limit_angle_neck_deg: float = 60
+
+var primary_limit_angle_hip_deg: float = 45
+var secondary_limit_angle_hip_deg: float = 5
+
+func _apply_target_modifications(delta, target_pose: IkPose3D):
+	if _get_target_position_look_at_head:
+		var pos = _get_target_position_look_at_head.call()
+		## compute target trasform
+		var original_transform = _target_pose_for_spring_interp.node_to_transform[neck_ik_node]
+
+		var original_transform_global = hip_ik_node.global_transform * original_transform
+
+		#var global_transform = neck_ik_node.global_transform
+		var local_space_pos = original_transform_global.inverse() * pos
+
+		var yz_plane_proj: Vector3 = local_space_pos * Vector3(0, 1, 1)
+		var xz_plane_proj: Vector3 = local_space_pos * Vector3(1, 0, 1)
+
+		var primary_angle_target = xz_plane_proj.signed_angle_to(Vector3.BACK, Vector3.UP)
+		var secondary_angle_target = yz_plane_proj.signed_angle_to(Vector3.BACK, Vector3.RIGHT)
+
+		var prim_limit = deg_to_rad(primary_limit_angle_neck_deg)
+		var sec_limit = deg_to_rad(secondary_limit_angle_neck_deg)
+
+		primary_angle_target = clamp(primary_angle_target, -prim_limit, prim_limit)
+		secondary_angle_target = clamp(secondary_angle_target, -sec_limit, sec_limit)
+
+		var clamped_target = Vector3.BACK.rotated(Vector3.UP, -primary_angle_target).rotated(Vector3.RIGHT, -secondary_angle_target)
+		
+		var local_space_target = Basis.looking_at(clamped_target, Vector3.UP, true).get_rotation_quaternion()
+		## interpolate with damp spring
+		neck_rot_interpolator.update(delta, local_space_target)
+
+		target_pose.node_to_transform[neck_ik_node].basis = Basis(neck_rot_interpolator.y)
+
+	if _get_target_position_look_at_hip:
+		var pos = _get_target_position_look_at_hip.call()
+		## compute target trasform
+		var local_space_pos = hip_ik_node.global_transform.inverse() * pos
+		var target = Basis.looking_at(local_space_pos, Vector3.UP, true).get_rotation_quaternion()
+		## interpolate with damp spring
+		hip_rot_interpolator.update(delta, target)
+
+		target_pose.node_to_transform[hip_ik_node].basis = Basis(hip_rot_interpolator.y)
+
+
+func _apply_current_pose(delta):
 	var pose = _current_pose
-	if _pose_modidification_callback:
-		_pose_modidification_callback.call(pose)
+	if _pose_modification_callback:
+		_pose_modification_callback.call(pose)
+
 	for node in pose.node_to_transform:
 		var transform = pose.node_to_transform[node]
 		node.transform = transform
