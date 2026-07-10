@@ -138,3 +138,19 @@ static func get_look_at_basis_limited(local_space_pos: Vector3, prim_limit_deg: 
 	var basis = Basis.looking_at(clamped_target, Vector3.UP, true)
 
 	return basis
+
+
+static func basis_from_normal(ref_basis: Basis, normal: Vector3) -> Basis:
+	var res = Basis()
+	res.x = normal.cross(ref_basis.z)
+	res.y = normal
+	res.z = ref_basis.x.cross(normal)
+
+	res = res.orthonormalized()
+
+	# var scale = ref_basis.get_scale()
+	# res.x *= scale.x
+	# res.y *= scale.y
+	# res.z *= scale.z
+
+	return res

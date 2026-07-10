@@ -90,6 +90,7 @@ static func check_area_raycast_avoid_static_3d(space_state: PhysicsDirectSpaceSt
 
 class RaycastCollisionResult3D:
 	var position: Vector3
+	var normal: Vector3
 
 # returns null if no collision
 static func check_static_raycast_collision_3d(space_state: PhysicsDirectSpaceState3D, 
@@ -109,12 +110,14 @@ static func check_static_raycast_collision_3d(space_state: PhysicsDirectSpaceSta
 		return null
 
 	raycast_res.position = res.position
+	raycast_res.normal = res.normal
 	
 	return raycast_res
 
 
 class RaycastCollisionResult2D:
 	var position: Vector2
+	var normal: Vector2
 
 # returns null if no collision
 static func check_static_raycast_collision_2d(space_state: PhysicsDirectSpaceState2D, 
@@ -134,6 +137,7 @@ static func check_static_raycast_collision_2d(space_state: PhysicsDirectSpaceSta
 		return null
 
 	raycast_res.position = res.position
+	raycast_res.normal = res.normal
 	
 	return raycast_res
 
