@@ -158,6 +158,9 @@ enum PoseTarget {Idle, Crouch, Roll, Fall, Jump}
 
 var enable_lean: bool = true
 
+func clear_poses_buffer():
+	poses_buffer.clear()
+
 var pose_target: PoseTarget:
 	set(val):
 		pose_target = val
@@ -361,7 +364,7 @@ func _update_buffer_moving(delta: float):
 		current_pose = poses_sequence_walk[current_index].get_blended_pose(poses_sequence_run[current_index], weight)
 
 	if poses_buffer.is_empty():
-		poses_buffer.assign(poses_sequence_walk)
+		poses_buffer.assign([current_pose, current_pose, current_pose, current_pose])
 
 	if current_index != prev_idx:
 		poses_buffer.pop_front()
