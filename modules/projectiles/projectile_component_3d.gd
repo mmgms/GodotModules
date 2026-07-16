@@ -67,10 +67,6 @@ func move(delta: float):
 		if _time_passed > _lifetime:
 			lifetime_over.emit(character3d.global_position)
 	
-	if perform_raycast_between_updates:
-		_check_hitboxes_raycast(_prev_pos, character3d.global_position)
-	else:
-		_check_hitboxes(character3d.global_position)
 
 	_prev_pos = character3d.global_position
 	
@@ -78,9 +74,15 @@ func move(delta: float):
 	character3d.velocity = new_velocity
 
 	var coll = character3d.move_and_collide(character3d.velocity * delta)
+	#DebugDraw3D.draw_line(_prev_pos, character3d.global_position, Color.REBECCA_PURPLE, 10.0)
+	if perform_raycast_between_updates:
+		_check_hitboxes_raycast(_prev_pos, character3d.global_position)
+	else:
+		_check_hitboxes(character3d.global_position)
+		
 	if not coll:
 		return
-
+		
 	var collider = coll.get_collider()
 
 	if collider is StaticBody3D or collider is CSGShape3D or collider is GridMap:

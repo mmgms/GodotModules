@@ -6,7 +6,6 @@ class_name ProjectileComponent2D
 ##	call move every physics frame
 
 
-
 @export var character2d: CharacterBody2D
 @export_flags_2d_physics var static_layer: int
 @export_flags_2d_physics var hitbox_layer: int
@@ -68,10 +67,6 @@ func move(delta: float):
 		if _time_passed > _lifetime:
 			lifetime_over.emit(character2d.global_position)
 	
-	if perform_raycast_between_updates:
-		_check_hitboxes_raycast(_prev_pos, character2d.global_position)
-	else:
-		_check_hitboxes(character2d.global_position)
 
 	_prev_pos = character2d.global_position
 	
@@ -79,6 +74,10 @@ func move(delta: float):
 	character2d.velocity = new_velocity
 
 	var coll = character2d.move_and_collide(character2d.velocity * delta)
+	if perform_raycast_between_updates:
+		_check_hitboxes_raycast(_prev_pos, character2d.global_position)
+	else:
+		_check_hitboxes(character2d.global_position)
 	if not coll:
 		return
 
