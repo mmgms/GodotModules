@@ -52,3 +52,28 @@ static func get_reach_target_spawn_info(
 	info.look_direction = dir
 
 	return info
+
+
+## accuracy between 0-100
+## assumes shooting direction is -shoot_from_node.global_transform.basis.z
+func get_projectile_pellet_spawn_info(shoot_from_node: Node3D, pellet_count: int, accuracy: float, spread_angle: float) -> Array[SpawnInfo]:
+	var infos: Array[SpawnInfo] = []
+	var accuracy_spread = (100 - accuracy) / 1000.0
+
+	for i in pellet_count:
+		var info = SpawnInfo.new()
+		var accuracy_x = randf_range(-accuracy_spread, + accuracy_spread)
+		var accuracy_y = randf_range(-accuracy_spread, + accuracy_spread)
+		var direction = -shoot_from_node.global_transform.basis.z + Vector3(accuracy_x, accuracy_y, 0) * shoot_from_node.global_transform.basis
+
+
+		if pellet_count > 1:
+			var spread_x = randf_range(-spread_angle, spread_angle)
+			var spread_y = randf_range(-spread_angle, spread_angle)
+			direction += Vector3(spread_x, spread_y, 0.0) * shoot_from_node.global_transform.basis
+
+		info.position = shoot_from_node.global_position
+		info.look_direction = direction
+		infos.append(info)
+
+	return infos
