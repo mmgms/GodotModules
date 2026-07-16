@@ -1,8 +1,8 @@
 extends BtNode
 class_name BtCooldown
 ## executes its child until it either returns SUCCESS or FAILURE, 
-## after which it will start an internal timer and return FAILURE until the timer is complete. 
-## The cooldown is then able to execute its child again
+## after which it will start an internal timer and return RUNNING until the timer is complete. 
+## When timer runs out return SUCCESS
 
 var _child: BtNode
 var _time_passed: float = 0
@@ -20,15 +20,15 @@ func _tick(delta: float) -> Status:
 		_time_passed += delta
 		if _time_passed >= _cooldown:
 			_timer_started = false
-			return Status.RUNNING
-		return Status.FAILURE
+			return Status.SUCCESS
+		return Status.RUNNING
 
 	var ret = _child._tick(delta)
 	if ret == Status.RUNNING:
 		return ret
 	
 	_timer_started = true
-	return Status.FAILURE
+	return Status.RUNNING
 	
 	
 func _abort():
