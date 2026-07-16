@@ -68,7 +68,7 @@ func move(delta: float):
 			lifetime_over.emit(character3d.global_position)
 	
 	if perform_raycast_between_updates:
-		_check_hitboxes_raycast(character3d.global_position, _prev_pos)
+		_check_hitboxes_raycast(_prev_pos, character3d.global_position)
 	else:
 		_check_hitboxes(character3d.global_position)
 
