@@ -1,0 +1,23 @@
+[gd_resource type="ParticleProcessMaterial" format=3 uid="uid://djbakblmiqw7i"]
+
+[sub_resource type="Curve" id="Curve_8ntjo"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.749004, 1), 0.0, 0.0, 0, 0, Vector2(0.996016, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_huqly"]
+curve = SubResource("Curve_8ntjo")
+
+[resource]
+emission_shape = 1
+emission_sphere_radius = 1.0
+direction = Vector3(0, 0, 1)
+spread = 0.0
+initial_velocity_min = 5.0
+initial_velocity_max = 8.0
+radial_velocity_min = -2.23517e-05
+radial_velocity_max = 1.99998
+gravity = Vector3(0, 0, 0)
+scale_min = 2.0
+scale_max = 3.5
+color = Color(2, 1, 4, 1)
+alpha_curve = SubResource("CurveTexture_huqly")

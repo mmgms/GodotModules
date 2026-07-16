@@ -1,0 +1,30 @@
+[gd_resource type="ParticleProcessMaterial" format=3 uid="uid://cad503dtgwkbk"]
+
+[sub_resource type="Curve" id="Curve_mjjvg"]
+_limits = [-0.01, 0.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_vrfwa"]
+_limits = [-2.0, 2.0, 0.0, 1.0]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveXYZTexture" id="CurveXYZTexture_m2b6j"]
+curve_x = SubResource("Curve_mjjvg")
+curve_y = SubResource("Curve_mjjvg")
+curve_z = SubResource("Curve_vrfwa")
+
+[resource]
+emission_shape = 6
+emission_ring_axis = Vector3(0, 0, 1)
+emission_ring_height = 0.0
+emission_ring_radius = 1.1
+emission_ring_inner_radius = 1.1
+emission_ring_cone_angle = 90.0
+orbit_velocity_min = 0.2
+orbit_velocity_max = 0.2
+orbit_velocity_curve = SubResource("CurveXYZTexture_m2b6j")
+radial_velocity_min = 0.199978
+radial_velocity_max = 0.499978
+gravity = Vector3(0, 0, 0)

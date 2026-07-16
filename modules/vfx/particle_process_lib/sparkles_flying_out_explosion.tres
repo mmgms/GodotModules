@@ -1,0 +1,32 @@
+[gd_resource type="ParticleProcessMaterial" format=3 uid="uid://bw5u6tdx1ns7e"]
+
+[sub_resource type="Curve" id="Curve_echoh"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_pim3w"]
+_limits = [0.0, 5.0, 0.0, 1.0]
+_data = [Vector2(0, 5), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_mp546"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveXYZTexture" id="CurveXYZTexture_tic5l"]
+curve_x = SubResource("Curve_echoh")
+curve_y = SubResource("Curve_pim3w")
+curve_z = SubResource("Curve_mp546")
+
+[resource]
+particle_flag_align_y = true
+emission_shape = 1
+emission_sphere_radius = 0.2
+spread = 180.0
+initial_velocity_min = 20.0
+initial_velocity_max = 25.0
+gravity = Vector3(0, -20, 0)
+scale_min = 0.15
+scale_max = 0.5
+scale_curve = SubResource("CurveXYZTexture_tic5l")
+color = Color(5, 2, 1, 1)

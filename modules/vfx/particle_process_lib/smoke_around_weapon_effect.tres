@@ -1,0 +1,24 @@
+[gd_resource type="ParticleProcessMaterial" format=3 uid="uid://dphjbcw85ogpi"]
+
+[sub_resource type="Curve" id="Curve_6u2d1"]
+_data = [Vector2(0, 0.022804), 0.0, 0.0, 0, 0, Vector2(0.179283, 1), 0.0, 0.0, 0, 0, Vector2(0.685259, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="CurveTexture" id="CurveTexture_3t5nu"]
+texture_mode = 1
+curve = SubResource("Curve_6u2d1")
+
+[resource]
+emission_shape = 3
+emission_box_extents = Vector3(0.02, 0.15, 0.005)
+angle_min = -180.0
+angle_max = 180.0
+radial_velocity_min = 0.0399776
+radial_velocity_max = 0.0599776
+gravity = Vector3(0, 0, 0)
+scale_min = 0.08
+scale_max = 0.12
+color = Color(0.82, 0.522613, 0.2952, 1)
+alpha_curve = SubResource("CurveTexture_3t5nu")
+anim_speed_min = 1.0
+anim_speed_max = 1.0

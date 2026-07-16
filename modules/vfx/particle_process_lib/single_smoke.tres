@@ -1,0 +1,34 @@
+[gd_resource type="ParticleProcessMaterial" format=3 uid="uid://qs2fnoib3kfk"]
+
+[sub_resource type="Curve" id="Curve_rmm1o"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.187251, 1), 0.0, 0.0, 0, 0, Vector2(0.784861, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="CurveTexture" id="CurveTexture_pfspq"]
+texture_mode = 1
+curve = SubResource("Curve_rmm1o")
+
+[sub_resource type="Curve" id="Curve_82lbd"]
+_limits = [0.0, 2.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.258964, 1.0777), 0.0, 0.0, 0, 0, Vector2(0.741036, 1.01182), 0.0, 0.0, 0, 0, Vector2(1, 2), 0.0, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="CurveTexture" id="CurveTexture_rmm1o"]
+curve = SubResource("Curve_82lbd")
+
+[resource]
+particle_flag_rotate_y = true
+emission_shape = 1
+emission_sphere_radius = 0.1
+angle_min = -180.0
+angle_max = 180.0
+direction = Vector3(0, 1, 0)
+spread = 0.0
+initial_velocity_min = 1.8
+initial_velocity_max = 2.3
+angular_velocity_min = -50.0
+angular_velocity_max = 50.0
+gravity = Vector3(0, 0, 0)
+scale_max = 1.3
+scale_curve = SubResource("CurveTexture_rmm1o")
+alpha_curve = SubResource("CurveTexture_pfspq")

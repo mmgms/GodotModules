@@ -1,0 +1,26 @@
+[gd_resource type="ParticleProcessMaterial" format=3 uid="uid://dgexdd77wx2b3"]
+
+[sub_resource type="Curve" id="Curve_huqly"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_4w3uf"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_bgdjb"]
+_limits = [0.0, 200.0, 0.0, 1.0]
+_data = [Vector2(0, 0.0557432), 0.0, 21.324, 0, 0, Vector2(1, 193.412), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveXYZTexture" id="CurveXYZTexture_bd4py"]
+curve_x = SubResource("Curve_huqly")
+curve_y = SubResource("Curve_4w3uf")
+curve_z = SubResource("Curve_bgdjb")
+
+[resource]
+gravity = Vector3(0, 0, 0)
+scale_min = 0.3
+scale_max = 0.3
+scale_curve = SubResource("CurveXYZTexture_bd4py")
+color = Color(2, 1, 3, 1)

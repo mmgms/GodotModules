@@ -1,0 +1,42 @@
+[gd_resource type="ParticleProcessMaterial" format=3 uid="uid://dvlgt7trlbqvp"]
+
+[sub_resource type="Curve" id="Curve_57fql"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.191235, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_72hxx"]
+texture_mode = 1
+curve = SubResource("Curve_57fql")
+
+[sub_resource type="Curve" id="Curve_h4k2x"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_osfax"]
+_limits = [-2.0, 2.0, 0.0, 1.0]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveXYZTexture" id="CurveXYZTexture_57fql"]
+curve_x = SubResource("Curve_h4k2x")
+curve_y = SubResource("Curve_osfax")
+curve_z = SubResource("Curve_h4k2x")
+
+[resource]
+particle_flag_align_y = true
+emission_shape = 6
+emission_ring_axis = Vector3(0, 1, 0)
+emission_ring_height = 0.2
+emission_ring_radius = 0.6
+emission_ring_inner_radius = 0.4
+emission_ring_cone_angle = 90.0
+direction = Vector3(0, 1, 0)
+spread = 0.0
+initial_velocity_min = 0.2
+initial_velocity_max = 0.8
+orbit_velocity_min = 0.6
+orbit_velocity_max = 1.3
+orbit_velocity_curve = SubResource("CurveXYZTexture_57fql")
+gravity = Vector3(0, 0, 0)
+color = Color(0.6, 0.8, 1.5, 1)
+alpha_curve = SubResource("CurveTexture_72hxx")

@@ -1,0 +1,19 @@
+[gd_resource type="ParticleProcessMaterial" format=3 uid="uid://dbmgvtqcmi403"]
+
+[sub_resource type="Curve" id="Curve_3xnh6"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.111554, 1), 0.0, 0.0, 0, 0, Vector2(0.808765, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -3.72578, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="CurveTexture" id="CurveTexture_tfphl"]
+curve = SubResource("Curve_3xnh6")
+
+[resource]
+emission_shape = 1
+emission_sphere_radius = 0.6
+gravity = Vector3(0, 4, 0)
+scale_min = 0.01
+scale_max = 0.12
+scale_curve = SubResource("CurveTexture_tfphl")
+color = Color(4, 1.25, 0.6, 0.8)
+turbulence_enabled = true
+turbulence_noise_scale = 5.0

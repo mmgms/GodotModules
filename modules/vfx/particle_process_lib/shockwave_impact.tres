@@ -1,0 +1,23 @@
+[gd_resource type="ParticleProcessMaterial" format=3 uid="uid://dw4n253tjb1g1"]
+
+[sub_resource type="Curve" id="Curve_h5d8a"]
+_data = [Vector2(0, 1), 0.0, 0.238165, 0, 0, Vector2(0.581673, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0481802, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_axl6r"]
+curve = SubResource("Curve_h5d8a")
+
+[sub_resource type="Curve" id="Curve_8frxe"]
+_data = [Vector2(0, 0), 0.0, 0.00359312, 0, 0, Vector2(1, 1), -0.187903, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_8frxe"]
+curve = SubResource("Curve_8frxe")
+
+[resource]
+gravity = Vector3(0, 0, 0)
+scale_min = 4.5
+scale_max = 5.0
+scale_curve = SubResource("CurveTexture_8frxe")
+color = Color(3.5, 2, 0.8, 0.1)
+alpha_curve = SubResource("CurveTexture_axl6r")
