@@ -1,4 +1,5 @@
 class_name ObjectPool
+## simple object pool, need to set max size, instantiate, initialize and claim callbacks
 
 var _pool: Array[PoolEntry]
 
@@ -8,7 +9,7 @@ class PoolEntry:
 	var object: Object
 	var available: bool
 
-func setup(max_size: int):
+func set_max_size(max_size: int):
 	_max_size = max_size
 	return self
 
