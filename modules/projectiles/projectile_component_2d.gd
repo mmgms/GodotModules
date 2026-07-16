@@ -22,6 +22,8 @@ signal lifetime_over(position: Vector2)
 
 var _initial_velocity: Vector2
 var _lifetime: float = -1
+var _areas_to_exclude: Array[Area2D]
+
 
 func setup(initial_velocity: Vector2, lifetime: float=-1):
 	_initial_velocity = initial_velocity
@@ -31,6 +33,10 @@ func setup(initial_velocity: Vector2, lifetime: float=-1):
 
 	_velocity_update_callback = keep_initial_velocity
 
+	return self
+
+func add_area_to_exclude(area: Area2D):
+	_areas_to_exclude.append(area)
 	return self
 
 ## callback signature (delta, previous_velocity) -> new velocity
@@ -63,7 +69,7 @@ func move(delta: float):
 			lifetime_over.emit(character2d.global_position)
 	
 	if perform_raycast_between_updates:
-		_check_hitboxes_raycast(character2d.global_position, _prev_pos)
+		_check_hitboxes_raycast(_prev_pos, character2d.global_position)
 	else:
 		_check_hitboxes(character2d.global_position)
 
@@ -107,6 +113,9 @@ func _check_hitboxes_raycast(from: Vector2, to: Vector2):
 		to)
 	
 	if area == null:
+		return
+	
+	if _areas_to_exclude.has(area):
 		return
 	
 	hit_hitbox.emit(area, from)

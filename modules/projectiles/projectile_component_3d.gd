@@ -8,8 +8,8 @@ class_name ProjectileComponent3D
 
 
 @export var character3d: CharacterBody3D
-@export_flags_2d_physics var static_layer: int
-@export_flags_2d_physics var hitbox_layer: int
+@export_flags_3d_physics var static_layer: int
+@export_flags_3d_physics var hitbox_layer: int
 @export var radius_check_hitboxes: float = 1
 @export var perform_raycast_between_updates: bool
 
@@ -22,6 +22,7 @@ signal lifetime_over(position: Vector3)
 
 var _initial_velocity: Vector3
 var _lifetime: float = -1
+var _areas_to_exclude: Array[Area3D]
 
 func setup(initial_velocity: Vector3, lifetime: float=-1):
 	_initial_velocity = initial_velocity
@@ -31,6 +32,10 @@ func setup(initial_velocity: Vector3, lifetime: float=-1):
 
 	_velocity_update_callback = keep_initial_velocity
 
+	return self
+
+func add_area_to_exclude(area: Area3D):
+	_areas_to_exclude.append(area)
 	return self
 
 ## callback signature (delta, previous_velocity) -> new velocity
@@ -106,6 +111,9 @@ func _check_hitboxes_raycast(from: Vector3, to: Vector3):
 		to)
 	
 	if area == null:
+		return
+	
+	if _areas_to_exclude.has(area):
 		return
 	
 	hit_hitbox.emit(area, from)

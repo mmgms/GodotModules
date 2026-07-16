@@ -37,7 +37,7 @@ func calculate_steering(agent: SteeringAgent2D, parameters: SteeringParameters2D
 func _report_neighbor(parameters: SteeringParameters2D, agent: SteeringAgent2D, neighbor: SteeringAgent2D) -> bool:
 	var to_agent := agent.position - neighbor.position
 
-	var distance_squared := to_agent.length_squared()
+	var distance_squared := to_agent.length_squared() + 0.1
 	var acceleration_max := parameters.linear_acceleration_max
 
 	var strength := decay_coefficient / distance_squared

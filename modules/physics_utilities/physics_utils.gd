@@ -28,11 +28,13 @@ static func check_area_raycast_avoid_static_2d(space_state: PhysicsDirectSpaceSt
 		static_layer: int, 
 		area_layer: int, 
 		from: Vector2, 
-		to: Vector2) -> Area2D:
+		to: Vector2,
+		hit_from_inside: bool=false) -> Area2D:
 
 	var query = PhysicsRayQueryParameters2D.create(from, to) 
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
+	query.hit_from_inside = hit_from_inside
 
 	query.collision_mask = static_layer | area_layer
 
@@ -72,11 +74,13 @@ static func check_area_raycast_avoid_static_3d(space_state: PhysicsDirectSpaceSt
 		static_layer: int, 
 		area_layer: int, 
 		from: Vector3, 
-		to: Vector3) -> Area3D:
+		to: Vector3,
+		hit_from_inside: bool=false) -> Area3D:
 
 	var query = PhysicsRayQueryParameters3D.create(from, to) 
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
+	query.hit_from_inside = hit_from_inside
 
 	query.collision_mask = static_layer | area_layer
 

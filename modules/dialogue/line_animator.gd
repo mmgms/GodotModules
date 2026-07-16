@@ -55,6 +55,8 @@ func animate(line: String):
 	_set_visible_characters_callback.call(0)
 
 	while not _stopped and _get_visible_ratio_callback.call() < 1.0:
+		if _current_characters_animated > bb_code_stripped_line.length()-1:
+			break
 		if bb_code_stripped_line[_current_characters_animated] != " ":
 			if _per_character_callback:
 				_per_character_callback.call()

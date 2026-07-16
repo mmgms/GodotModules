@@ -22,6 +22,9 @@ var _set_orientation_callback: Callable
 var _velocity_per_position_update: Vector2 = Vector2.ZERO
 
 
+func get_steering_agent() -> SteeringAgent2D:
+	return _steering_agent
+
 func set_node2d_for_velocity_update(node: Node2D):
 	_get_agent_position_callback = func(): return node.global_position
 	_get_velocity_callback = func(): return _velocity_per_position_update

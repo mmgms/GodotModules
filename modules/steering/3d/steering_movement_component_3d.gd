@@ -22,6 +22,9 @@ var _set_orientation_callback: Callable
 var _velocity_per_position_update: Vector3 = Vector3.ZERO
 
 
+func get_steering_agent() -> SteeringAgent3D:
+	return _steering_agent
+
 func set_node3d_for_velocity_update(node: Node3D):
 	var _node3d = node
 	_get_agent_position_callback = func(): return node.global_position

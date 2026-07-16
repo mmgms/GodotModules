@@ -17,8 +17,8 @@ func set_line(line: String):
 
 
 func _step():
-	if _dialogue_tree._line_spoken_callback:
-		_dialogue_tree._line_spoken_callback.call(_line)
 	if _dialogue_tree._character_speaking_callback:
 		_dialogue_tree._character_speaking_callback.call(_character)
+	if _dialogue_tree._line_spoken_callback:
+		_dialogue_tree._line_spoken_callback.call(_line)
 	return Status.Done

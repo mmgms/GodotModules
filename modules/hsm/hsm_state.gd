@@ -62,6 +62,8 @@ func _on_enter():
 		
 	for transition in _transitions:
 		if transition._event.is_empty():
+			if transition._guard and not transition._guard.call():
+				continue
 			_hsm._set_transition_to_process(transition)
 			break
 	

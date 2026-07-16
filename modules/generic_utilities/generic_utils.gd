@@ -119,6 +119,9 @@ class RequestManager:
 		pass
 
 	var request_handlers: Dictionary[Variant, Callable]
+	
+	func clear():
+		request_handlers.clear()
 
 	func request(_type: Variant, req: LevelRequest) -> LevelRequest:
 		assert(request_handlers.has(_type))
@@ -138,3 +141,22 @@ func set_label_override_color(label: Control, color: Color):
 
 func set_progress_bar_override_color(progress_bar: ProgressBar, color: Color):
 	progress_bar.get("theme_override_styles/fill").bg_color = color
+	
+
+class FrequencyLimiter:
+
+	var _time_passed = 0.0
+	var _time: float
+	var _cb: Callable
+
+	func _init(time: float, cb: Callable, call_initial: bool = false) -> void:
+		_time = time
+		_cb = cb
+		if call_initial:
+			_time_passed = _time + 1.0
+
+	func process(delta: float):
+		_time_passed += delta
+		if _time_passed > _time:
+			_time_passed = 0
+			_cb.call()
