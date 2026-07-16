@@ -160,3 +160,9 @@ class FrequencyLimiter:
 		if _time_passed > _time:
 			_time_passed = 0
 			_cb.call()
+
+func get_timestamp_seconds():
+	return float(Time.get_ticks_msec())/1000
+
+func get_elapsed_seconds(timestamp: float):
+	return get_timestamp_seconds() - timestamp
