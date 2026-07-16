@@ -154,3 +154,10 @@ static func basis_from_normal(ref_basis: Basis, normal: Vector3) -> Basis:
 	# res.z *= scale.z
 
 	return res
+
+## useful to convert 2d movement imput in 3d platfomer movement direction
+## eg: input = Input.get_vector("right", "left", "back", "forward"), node = node we want the input to be relative to
+static func convert_local_vec2_direction_to_global(input: Vector2, node: Node3D):
+	var local = Vector3(input.x, 0.0, input.y)
+	var global = node.global_basis * local
+	return Vector2(global.x, global.z)
