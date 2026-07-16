@@ -1,7 +1,8 @@
 extends Node
 class_name SimpleWalker
 ## simple procedural walker, updates position of provided ik node targets based on velocity and trasform of main body
-## need to provide callable for adjacent and opposite ik target or preset for 4 legged spider
+## need to provide callable for adjacent and opposite ik target index, function to calculate target based on offset and velocity
+## preset for 4 legged spider
 
 class StepInfo:
 	var position: Vector3
