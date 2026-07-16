@@ -24,7 +24,7 @@ class AiVision3dShape:
 	func get_max_range() -> float:
 		return 0.0
 
-class AiVision3dShapeCircle extends AiVision3dShape:
+class AiVision3dShapeSphere extends AiVision3dShape:
 	var radius: float
 	
 	func _init(_radius: float) -> void:
@@ -56,11 +56,6 @@ class AiVision3dShapeCone extends AiVision3dShape:
 		
 	func get_max_range() -> float:
 		return radius
-	
-class AiVision3dShapeRectangle extends AiVision3dShape:
-	var height: float
-	var width: float
-	var dir_callback: Callable
 	
 var shapes: Array[AiVision3dShape]
 

@@ -49,11 +49,6 @@ class AiVision2dShapeCone extends AiVision2dShape:
 	func get_max_range() -> float:
 		return radius
 	
-class AiVision2dShapeRectangle extends AiVision2dShape:
-	var height: float
-	var width: float
-	var dir_callback: Callable
-	
 var shapes: Array[AiVision2dShape]
 
 var _current_max_range: float
