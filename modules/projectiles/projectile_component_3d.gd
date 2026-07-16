@@ -34,6 +34,10 @@ func setup(initial_velocity: Vector3, lifetime: float=-1):
 
 	return self
 
+func set_lifetime_from_max_range(max_range: float):
+	_lifetime = max_range/_initial_velocity.length()
+	return self
+
 func add_area_to_exclude(area: Area3D):
 	_areas_to_exclude.append(area)
 	return self
