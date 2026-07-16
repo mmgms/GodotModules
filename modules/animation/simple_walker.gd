@@ -1,175 +1,95 @@
 extends Node
 class_name SimpleWalker
 
-@export var foot_targetl: Node3D
-@export var foot_targetr: Node3D
-@export var main_body: Node3D
-@export var character_body: CharacterBody3D
+class StepInfo:
+	var position: Vector3
+	var normal: Vector3
 
-@export var hip_target: Node3D
-@export var platfomrer_component: PlatformerMovementComponent3D
+	func _init(pos) -> void:
+		position = pos
+		normal = Vector3.UP
 
-@export var curve: Curve
+var _ik_targets: Array[Node3D]
+var _ik_target_offsets: Array[Vector3]
+var _step_targets: Array[StepInfo]
+var _is_stepping: Array[bool]
 
-var _rest_hip_position: Vector3
-var _rest_hip_basis: Basis
-func setup():
-	foot_controller_left = FootCotroller.new(true, foot_targetl, main_body, character_body)
-	foot_controller_right = FootCotroller.new(false, foot_targetr, main_body, character_body)
-	foot_controller_left._curve = curve
-	foot_controller_right._curve = curve
+var _prev_pos: Vector3
+var _main_node: Node3D
+
+var _step_distance: float = 3.0
+var _vel_offset = 20.0
+
+func set_step_distance(dist: float):
+	_step_distance = dist
+	return self
+
+func set_vel_offset(offset: float):
+	_vel_offset = offset
+	return self
+
+func setup(main_node: Node3D, ik_targets: Array[Node3D]) -> void:
+	_prev_pos = main_node.global_position
+	_main_node = main_node
+
+	_ik_targets.assign(ik_targets)
+	_ik_target_offsets.assign(ik_targets.map(func(x): return main_node.to_local(x.global_position)))
+	_step_targets.assign(_ik_target_offsets.map(func(x): return StepInfo.new(x)))
+	_ik_targets.map(func(x): x.top_level = true)
+	_is_stepping.assign(ik_targets.map(func(_x): return false))
 	
-	_rest_hip_position = hip_target.position
-	_rest_hip_basis = hip_target.basis
 
-func update(delta: float):
-	_update_lean(delta)
-	_update_hip(delta)
-	_update_feet(delta)
-	#_update_foot_target(step_update_r, foot_targetr, delta, -1, 1)
-	#_update_foot_target(step_update_l, foot_targetl, delta, 1, -1)
+func _update_step_target(step_target: StepInfo, offset: Vector3, velocity: Vector3):
+	var _rot_offset = offset * Vector3(1, 0, 1).direction_to(Vector3.ZERO) * 0.9
+	var from = _main_node.transform * (offset + _rot_offset + Vector3.UP*10) + velocity * _vel_offset
+	var to = _main_node.transform *  (offset - _rot_offset - Vector3.UP*5) + velocity * _vel_offset
 
+	var res = PhysicsUtils.check_static_raycast_collision_3d(
+		_main_node.get_world_3d().direct_space_state, 
+		0b1, from, to)
+	if not res:
+		return
 
-class Damper:
-	var val
-	var speed
+	step_target.position = res.position
+	step_target.normal = res.normal if not res.normal.is_zero_approx() else Vector3.UP
+	return res.position
 	
-	func _init(_val: Variant, _speed: Variant) -> void:
-		val = _val
-		speed = _speed
+func _get_adjacent_idx(my_idx: int) -> int:
+	return wrapi(my_idx + 2, 0, _ik_targets.size())
+
+func _get_opposite_idx(my_idx: int) -> int:
+	var dir = -1 if my_idx % 2 == 0 else 1
+	return wrapi(my_idx + dir, 0, _ik_targets.size())
+
+
+func process(_delta: float) -> void:
+
+	var velocity = _main_node.global_position - _prev_pos
+	_prev_pos = _main_node.global_position
 	
-	func update(target, duration, delta_time):
-		var omega = 2.0/ duration
-		var _exp = exp(-omega * delta_time)
-		var change = val - target
-		var temp = (speed + change * omega) * delta_time
+	for i in _ik_targets.size():
+		_update_step_target(_step_targets[i], _ik_target_offsets[i], velocity)
 		
-		speed = (speed - temp * omega) * _exp
-		val = target + (change + temp) * _exp
-
-
-var smooth_lean: Damper = Damper.new(Quaternion.IDENTITY, Quaternion.IDENTITY)
-func _update_lean(delta):
-	var accell = platfomrer_component.get_last_accelleration()
-	var lean_multi = 8.0#8.0
-	var max_lean_angle = 45.0
-	var lean_smoothing_seconds = 0.25;
+		var adj_idx = _get_adjacent_idx(i)
+		var opposite_idx = _get_opposite_idx(i)
+		if not _is_stepping[i] and not _is_stepping[adj_idx] \
+			and _ik_targets[i].global_position.distance_to(_step_targets[i].position) > _step_distance:
+			step(i)
+			step(opposite_idx) 
 	
-	var target_lean: Quaternion = Quaternion.IDENTITY
-	
-	var lean = Vector3.UP.cross(accell)
-	
+func step(i: int):
+	var ik_node = _ik_targets[i]
+	var target_pos = _step_targets[i].position
 
-	var lean_amout = lean.length()
-	if lean_amout > 0.0:
-	
-		var lean_axis = lean / lean_amout;
-		var lean_angle = lean_multi * lean_amout 
-		lean_angle = min( lean_angle, max_lean_angle)
-		target_lean = Quaternion(lean_axis, deg_to_rad( lean_angle ))
+	var target_basis = MathUtils.basis_from_normal(ik_node.global_basis, _step_targets[i].normal)
 
-	smooth_lean.update( target_lean, lean_smoothing_seconds, delta)
+	#ik_node.basis = lerp(ik_node.basis, target_basis, move_speed * delta).orthonormalized()
+	ik_node.basis = target_basis
 
-	# note how we multiple on the left because the lean is in world-space
-	var rot: Quaternion = smooth_lean.val * Basis.from_euler(Vector3(0, main_body.global_rotation.y, 0.0)).get_rotation_quaternion()
-	
-	main_body.global_basis = Basis(rot)
+	var half_way = (ik_node.global_position + target_pos) /2
+	_is_stepping[i] = true
 
-var hip_phase_speed = 3.5
-var hip_amplitude_damp_seconds = 0.5
-var hip_offset_z = 0.02
-var hip_bias_z = -0.017
-var hip_roll = deg_to_rad(2.0)
-
-var hip_phase = 0.0
-
-
-var hip_multi_damper: Damper = Damper.new(0.0, 0.0)
-
-func _update_hip( delta):
-	var normalized_speed = character_body.velocity.length() /platfomrer_component.base_speed
-	var stick_tilt = platfomrer_component.get_last_movement_direction().length()
-	
-	hip_multi_damper.update(stick_tilt, hip_amplitude_damp_seconds, delta )
-	hip_phase += hip_phase_speed * normalized_speed * delta;
-	var hip_target_offset = hip_multi_damper.val * ( hip_bias_z + hip_offset_z * sin( hip_phase * 2.0 * PI ))
-	var hip_target_roll = hip_multi_damper.val * hip_roll * sin( 0.5 * hip_phase * 2.0 * PI )
-	
-	hip_target.position = _rest_hip_position + hip_target_offset * Vector3.UP
-	hip_target.basis = _rest_hip_basis * Basis.from_euler(Vector3(0, 0, hip_target_roll))
-
-func _update_feet(delta):
-	foot_controller_right.update(hip_phase, hip_multi_damper.val, delta)
-	foot_controller_left.update(hip_phase, hip_multi_damper.val, delta)
-	
-var foot_controller_left: FootCotroller
-var foot_controller_right: FootCotroller
-
-
-class FootCotroller:
-	var rest_pos: Vector3
-	var is_left: bool
-	var foot_target: Node3D
-	
-	var _main_body: Node3D
-	var _character: CharacterBody3D
-	var _pinned_pos: Vector3
-	var _is_pinned: bool
-	
-	var step_height: float = 0.45
-	var step_extrap: float = 0.15
-	
-	var _curve: Curve
-	
-	func _init(_is_left: bool, _target: Node3D, main_body: Node3D, character: CharacterBody3D) -> void:
-		is_left = _is_left
-		rest_pos = main_body.to_local(_target.global_position)
-		foot_target = _target
-		_main_body = main_body
-		_character = character
-		
-		_pinned_pos = main_body.global_transform * rest_pos
-		_is_pinned = true
-		
-	func update(hip_phase, hip_multi, delta):
-		# reset feet to rest-position
-		#foot_target.position = rest_pos
-
-		# convert feet to world-space
-		#FTransform ToWorld( Rotation, Position );
-		#FootPosL = ToWorld.TransformPosition( FootPosL );
-		
-		var radians_offset = 0.0 if is_left else PI
-		var radians = fmod(0.5 * hip_phase * TAU + radians_offset, TAU)
-		var arc = max(0.0, hip_multi * sin(radians))
-		
-		#foot_target.global_position.y = rest_pos.y + step_height * arc
-		#
-		#return
-		
-		
-		var pos = _main_body.global_transform * rest_pos
-		pos += step_extrap * _character.velocity
-		pos.y = rest_pos.y
-
-		var want_pin: bool = radians >= PI
-		if _is_pinned != want_pin:
-			if want_pin:
-				_pinned_pos = pos
-			else:
-				_pinned_pos = _main_body.global_transform.inverse() * _pinned_pos
-			_is_pinned = want_pin
-
-		if _is_pinned:
-			pos = _main_body.global_transform.inverse() * _pinned_pos
-		else:
-			var x = min( 1.0, radians / PI )
-			pos.y += step_height * arc * hip_multi * step_arc(x)
-			pos = lerp(_pinned_pos, _main_body.global_transform.inverse() * pos , x)
-			
-		foot_target.global_position = _main_body.global_transform * pos
-		
-		
-	func step_arc(x: float) -> float:
-		var _x =  1.0 - x 
-		return 9.481481481 * _x * _x * _x * _x
+	var tween := create_tween()
+	tween.tween_property(ik_node, "global_position", half_way + _main_node.basis.y, 0.1)
+	tween.tween_property(ik_node, "global_position", target_pos, 0.1)
+	tween.tween_callback(func(): _is_stepping[i] = false)
