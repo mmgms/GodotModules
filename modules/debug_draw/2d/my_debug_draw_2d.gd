@@ -1,5 +1,5 @@
-# DebugDraw2D.gd
-# Autoload this script as a singleton named "DebugDraw2D"
+# MyDebugDraw2D.gd
+# Autoload this script as a singleton named "MyDebugDraw2D"
 
 extends Node2D
 
