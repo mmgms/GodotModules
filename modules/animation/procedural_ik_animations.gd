@@ -27,6 +27,8 @@ class_name ProceduralAnimator
 @export var roll_pose: IkStoredPose3D
 
 @export var neck_ik_node: Node3D
+
+@export var root_ik_node: Node3D
 @export var hip_ik_node: Node3D
 @export var ik_target_parent: Node3D
 @export var main_body: Node3D
@@ -49,91 +51,6 @@ var poses_sequence_walk: Array[IkPose3D]
 var pose_sequence_crouch_walk: Array[IkPose3D]
 
 var hsm: Hsm
-
-class InterpolationInfo:
-	var node: Node3D
-	var interpolator_pos: AnimationUtilities.SecondOrderDynamics
-	var interpolator_rot: AnimationUtilities.SecondOrderDynamics
-
-	func set_parameters(f, z, r):
-		interpolator_pos.set_parameters(f, z, r)
-		interpolator_rot.set_parameters(f, z, r)
-
-	func _init(_node: Node3D) -> void:
-		node = _node
-		interpolator_pos = AnimationUtilities.SecondOrderDynamics.new(node.position, Vector3.ZERO).set_smooth_damp()
-		interpolator_rot = AnimationUtilities.SecondOrderDynamics.new(
-			node.transform.basis.get_rotation_quaternion(), Quaternion.IDENTITY).set_smooth_damp()
-
-	func _update(delta: float, target: Transform3D):
-		interpolator_pos.update(delta, target.origin)
-		interpolator_rot.update(delta, target.basis.get_rotation_quaternion())
-
-	func get_updated_transform() -> Transform3D:
-		return Transform3D(Basis(interpolator_rot.y), interpolator_pos.y)
-
-class IkPose3D:
-	var name: String
-
-	var node_to_transform: Dictionary[Node3D, Transform3D]
-
-	var node_to_interpolation_info: Dictionary[Node3D, InterpolationInfo]
-
-	func duplicate() -> IkPose3D:
-		var new = IkPose3D.new()
-		new.node_to_transform = node_to_transform.duplicate()
-		return new
-
-	func setup(nodes: Array[Node3D]):
-		for node in nodes:
-			var info = InterpolationInfo.new(node)
-			node_to_transform[node] = node.transform
-			node_to_interpolation_info[node] = info
-
-	func set_interpolator_parameters(f, z, r):
-		for node in node_to_interpolation_info:
-			node_to_interpolation_info[node].set_parameters(f, z, r)
-
-	func reset_interpolator():
-		for node in node_to_transform.keys():
-			var info = InterpolationInfo.new(node)
-			node_to_interpolation_info[node] = info
-
-	func update_spring_interpolator(delta: float, target: IkPose3D):
-		for node in node_to_transform:
-			node_to_interpolation_info[node]._update(delta, target.node_to_transform[node])
-			node_to_transform[node] = node_to_interpolation_info[node].get_updated_transform()
-
-
-	func get_blended_pose(with: IkPose3D, weight: float) -> IkPose3D:
-		var new_pose = IkPose3D.new()
-		for node in node_to_transform:
-			var new_transform = Transform3D()
-			new_transform.origin = node_to_transform[node].origin.lerp(with.node_to_transform[node].origin, weight)
-			new_transform.basis = Basis(node_to_transform[node].basis.get_rotation_quaternion().slerp(
-				with.node_to_transform[node].basis.get_rotation_quaternion(), weight))
-				
-			new_pose.node_to_transform[node] = new_transform
-
-		return new_pose
-
-	# func get_interpolated_pose(next_pose: IkPose3D, result: IkPose3D, delta: float):
-	# 	for node in node_to_transform:
-	# 		var start_trans = node_to_transform[node]
-	# 		var next_trans = next_pose.node_to_transform[node]
-
-	# 		var new_transform = Transform3D()
-
-	# 		new_transform.basis = Basis(start_trans.basis.get_rotation_quaternion()
-	# 								.slerp(next_trans.basis.get_rotation_quaternion(), ease(delta, 2)))
-	# 		new_transform.origin = start_trans.origin.lerp(next_trans.origin, ease(delta, 2))
-
-	# 		result.node_to_transform[node] = new_transform
-			
-	func add_offset(node:Node3D, offset: Vector3):
-		assert(node_to_transform.has(node))
-		node_to_transform[node].origin += offset
-
 
 func get_cubic_interpolated_pose(values: Array[IkPose3D], delta: float) -> IkPose3D:
 
@@ -395,13 +312,13 @@ func set_pose_modification_callback(cb):
 	return self
 
 var _get_target_position_look_at_head
-# (IkPose3D) -> ()
+# () -> (Vector3)
 func set_get_target_position_look_at_head(cb):
 	_get_target_position_look_at_head = cb
 	return self
 
 var _get_target_position_look_at_hip
-# (IkPose3D) -> ()
+# () -> (Vector3)
 func set_get_target_position_look_at_hip(cb):
 	_get_target_position_look_at_hip = cb
 	return self
