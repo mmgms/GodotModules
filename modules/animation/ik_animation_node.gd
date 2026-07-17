@@ -1,6 +1,10 @@
 class_name IkAnimationNode
 
+var _name: String
 
+func set_name(name: String):
+	_name = name
+	return self
 
 func process(delta: float) -> IkPose3D:
 	return null
