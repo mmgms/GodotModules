@@ -10,6 +10,7 @@ var _speed_callback: Callable
 var _final_pose: IkPose3D
 
 func setup(ik_parent: Node3D, stored_pass_pose_r: IkStoredPose3D, stored_reach_pose_r: IkStoredPose3D):
+	_final_pose = IkPose3D.new()
 	_cubic_interpolator = AnimationUtilities.CubicInterpolator.new()
 	_ik_target_parent = ik_parent
 	var _pass_pose = _convert_stored_to_ik_pose(ik_parent, stored_pass_pose_r)
@@ -123,4 +124,3 @@ func get_cubic_interpolated_pose(values: Array[IkPose3D], target: IkPose3D, delt
 			values.map(func(x: IkPose3D): return x.node_to_transform[node].origin), delta)
 
 		target.node_to_transform[node] = new_transform
-

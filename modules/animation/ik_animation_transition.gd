@@ -15,7 +15,10 @@ var _is_transitioning: bool
 var _current_pose: IkPose3D
 
 func setup(children: Array[IkAnimationNode]):
+	assert(children.size() > 0)
+	_current_pose = IkPose3D.new()
 	_children = children
+	_current_child = children[0]
 	return self
 
 func set_cross_fade_time(val: float):
@@ -25,6 +28,8 @@ func set_cross_fade_time(val: float):
 
 func transition_to(child: IkAnimationNode):
 	assert(_children.has(child))
+	if _current_child == child:
+		return
 	_next_child = child
 	_is_transitioning = true
 	_time_passed = 0.0
