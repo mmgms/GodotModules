@@ -55,11 +55,18 @@ func _setup_joints():
 		# 	bone.set("joint_constraints/angular_limit_upper", 2)
 		# 	bone.set("joint_constraints/angular_limit_lower", -2)
 		else:
-			bone.joint_type = PhysicalBone3D.JOINT_TYPE_HINGE
-			bone.joint_rotation = _get_joint_rotation(my_name, parent_name)
-			bone.set("joint_constraints/angular_limit_enabled", true)
-			bone.set("joint_constraints/angular_limit_upper", _hinge_joint_limit)
-			bone.set("joint_constraints/angular_limit_lower", -_hinge_joint_limit)
+			bone.joint_type = PhysicalBone3D.JOINT_TYPE_6DOF
+			bone.set("joint_constraints/x/linear_spring_enabled", true)
+			bone.set("joint_constraints/y/linear_spring_enabled", true)
+			bone.set("joint_constraints/z/linear_spring_enabled", true)
+			bone.set("joint_constraints/z/angular_limit_upper", _hinge_joint_limit)
+			bone.set("joint_constraints/z/angular_limit_lower", -_hinge_joint_limit)
+
+			# bone.joint_type = PhysicalBone3D.JOINT_TYPE_HINGE
+			# bone.joint_rotation = _get_joint_rotation(my_name, parent_name)
+			# bone.set("joint_constraints/angular_limit_enabled", true)
+			# bone.set("joint_constraints/angular_limit_upper", _hinge_joint_limit)
+			# bone.set("joint_constraints/angular_limit_lower", -_hinge_joint_limit)
 
 func _should_setup_cone_joint(my_name: StringName, parent_name: StringName):
 	if parent_name.contains(neck_parent_bone_name):
