@@ -18,6 +18,9 @@ func setup(ik_parent: Node3D, stored_pass_pose_r: IkStoredPose3D, stored_reach_p
 	_pose_sequence = _build_pose_sequence(_pass_pose, _reach_pose)
 	return self
 
+func get_current_angle():
+	return _current_angle
+
 # () -> float
 func set_speed_callback(cb: Callable):
 	_speed_callback = cb
