@@ -13,6 +13,13 @@ var _blend_amount_callback: Callable
 var _filter: Array[Node3D]
 var _filter_enabled: bool
 
+
+func _get_debug_string() -> String:
+	var text = "%s:" % _name if not _name.is_empty() else get_script().get_global_name()
+	text += "[ul]%s[/ul]" % _base_animation._get_debug_string()
+	text += "[ul]%s(Blended %s)[/ul]" % [_blend_animation._get_debug_string(), _blend_amount]
+	return text
+
 func setup(base_animation: IkAnimationNode, blend_animation: IkAnimationNode):
 	_base_animation = base_animation
 	_blend_animation = blend_animation
@@ -39,11 +46,13 @@ func process(delta: float):
 	if _blend_amount_callback:
 		amount = _blend_amount_callback.call()
 		amount = max(amount, 0)
+		_blend_amount = amount
+
 	var base_pose = _base_animation.process(delta)
 	var blend_pose = _blend_animation.process(delta)
 	if _filter_enabled:
-		base_pose.get_blended_pose_target(blend_pose, _blended_pose, amount)
-	else:
 		base_pose.get_filtered_blended_pose_target(blend_pose, _blended_pose, amount, _filter)
+	else:
+		base_pose.get_blended_pose_target(blend_pose, _blended_pose, amount)
 
 	return _blended_pose

@@ -11,6 +11,9 @@ var _node: Node3D
 var _ampl_callback: Callable
 var _angle_callback: Callable
 
+func _get_debug_string() -> String:
+	return _get_debug_string_modifier(_prev_node)
+
 func setup(node: Node3D, prev_node: IkAnimationNode):
 	_node = node
 	_prev_node = prev_node

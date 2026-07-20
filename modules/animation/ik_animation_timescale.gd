@@ -5,6 +5,9 @@ var _from: IkAnimationNode
 var _time_scale: float
 
 
+func _get_debug_string() -> String:
+	return _get_debug_string_modifier(_from)
+
 func setup(from: IkAnimationNode):
 	_from = from
 	_time_scale = 1.0

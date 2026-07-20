@@ -2,6 +2,15 @@ class_name IkAnimationNode
 
 var _name: String
 
+func _get_debug_string() -> String:
+	var text = "%s:" % _name if not _name.is_empty() else get_script().get_global_name()
+	return text
+
+func _get_debug_string_modifier(next: IkAnimationNode) -> String:
+	var text = "%s:" % _name if not _name.is_empty() else get_script().get_global_name()
+	text += "[ul]%s[/ul]" % next._get_debug_string()
+	return text
+
 func set_name(name: String):
 	_name = name
 	return self

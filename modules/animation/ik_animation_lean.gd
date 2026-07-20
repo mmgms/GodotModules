@@ -9,6 +9,9 @@ var _node: Node3D
 
 var _lean_interpolator: AnimationUtilities.SecondOrderDynamics
 
+func _get_debug_string() -> String:
+	return _get_debug_string_modifier(_prev_node)
+
 func setup(node: Node3D, prev_node: IkAnimationNode):
 	_node = node
 	_prev_node = prev_node

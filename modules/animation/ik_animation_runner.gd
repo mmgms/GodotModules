@@ -15,3 +15,9 @@ func process(delta):
 	for node in pose.node_to_transform:
 		var transform = pose.node_to_transform[node]
 		node.transform = transform
+
+
+func get_debug_string():
+	if not _current_ik_node:
+		return
+	return _current_ik_node._get_debug_string()

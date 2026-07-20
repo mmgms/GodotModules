@@ -14,6 +14,19 @@ var _time_passed: float = 0
 var _is_transitioning: bool
 var _current_pose: IkPose3D
 
+
+func _get_debug_string() -> String:
+	var text = "%s:" % _name if not _name.is_empty() else get_script().get_global_name()
+	for child in _children:
+		if child == _current_child:
+			text += "[ul][color=green](Running)%s[/color][/ul]" % child._get_debug_string()
+		elif child == _next_child:
+			text += "[ul][color=orange](Next)%s[/color][/ul]" % child._get_debug_string()
+		else :
+			text += "[ul]%s[/ul]" % child._get_debug_string()
+
+	return text
+
 func setup(children: Array[IkAnimationNode]):
 	assert(children.size() > 0)
 	_current_pose = IkPose3D.new()
