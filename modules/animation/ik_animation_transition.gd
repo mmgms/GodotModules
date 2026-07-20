@@ -28,8 +28,10 @@ func set_cross_fade_time(val: float):
 
 func transition_to(child: IkAnimationNode):
 	assert(_children.has(child))
-	if _current_child == child or (_is_transitioning and _next_child == child):
+	if (not _is_transitioning and _current_child == child) or (_is_transitioning and _next_child == child):
+		#print("cant tranisition to %s" % child._name)
 		return
+	#print("transitioning to %s: %s" % [child._name, GenericUtils.get_timestamp_seconds()])
 	_next_child = child
 	_is_transitioning = true
 	_time_passed = 0.0

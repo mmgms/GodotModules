@@ -132,14 +132,14 @@ class RequestManager:
 		request_handlers[type] = action
 
 
-func center_control_pivot(node: Control):
+static func center_control_pivot(node: Control):
 	node.pivot_offset_ratio = Vector2(0.5, 0.5)
 
 
-func set_label_override_color(label: Control, color: Color):
+static func set_label_override_color(label: Control, color: Color):
 	label.set("theme_override_colors/font_color", color)
 
-func set_progress_bar_override_color(progress_bar: ProgressBar, color: Color):
+static func set_progress_bar_override_color(progress_bar: ProgressBar, color: Color):
 	progress_bar.get("theme_override_styles/fill").bg_color = color
 	
 
@@ -161,8 +161,8 @@ class FrequencyLimiter:
 			_time_passed = 0
 			_cb.call()
 
-func get_timestamp_seconds():
+static func get_timestamp_seconds():
 	return float(Time.get_ticks_msec())/1000
 
-func get_elapsed_seconds(timestamp: float):
+static func get_elapsed_seconds(timestamp: float):
 	return get_timestamp_seconds() - timestamp

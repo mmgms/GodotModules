@@ -161,3 +161,35 @@ static func convert_local_vec2_direction_to_global(input: Vector2, node: Node3D)
 	var local = Vector3(input.x, 0.0, input.y)
 	var global = node.global_basis * local
 	return Vector2(global.x, global.z)
+
+
+
+static func get_barycentric_coordinates_2d(p: Vector2, a: Vector2, b: Vector2, c: Vector2) -> Array[float]:
+	var weights: Array[float] = []
+	var abc_area = area_of_triangle_2d(a, b, c)
+	assert(abc_area > 0.0)
+	var bcp = area_of_triangle_2d(b, c, p)/abc_area
+	var cap = area_of_triangle_2d(c, a, p)/abc_area
+	var abp = area_of_triangle_2d(a, b, p)/abc_area
+	weights.append(bcp)
+	weights.append(cap)
+	weights.append(abp)
+	return weights
+
+
+static func area_of_triangle_2d(a: Vector2, b: Vector2, c: Vector2) -> float:
+	return area_of_polygon_2d([a, b, c])
+
+static func area_of_polygon_2d(points: Array[Vector2]) -> float:
+
+	var sum = 0.0
+	for i in points.size() - 1:
+		var current = points[i]
+		var next = points[i +1]
+		sum += (next.x - current.x) *(current.y + next.y)
+
+	return abs(sum/2.0)
+
+
+static func is_point_in_triangle(p: Vector2, a: Vector2, b: Vector2, c: Vector2) -> bool:
+	return Geometry2D.point_is_inside_triangle(p, a, b, c)
