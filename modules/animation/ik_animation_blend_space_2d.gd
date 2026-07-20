@@ -16,6 +16,18 @@ var _current_blend: Vector2
 
 var _current_pose: IkPose3D
 
+
+func _get_debug_string() -> String:
+	var text = "%s:" % _name if not _name.is_empty() else get_script().get_global_name()
+	if not _current_triangle:
+		return text
+	for i in _current_triangle.points.size():
+		var point = _current_triangle.points[i]
+		var weight = _current_weights[i]
+		text += "[ul]%s(Blended %s)[/ul]" % [point.node._get_debug_string(), weight]
+	return text
+
+
 func _init():
 	_current_pose = IkPose3D.new()
 
@@ -36,8 +48,9 @@ func add_point(node: IkAnimationNode, point: Vector2):
 	
 	if triangles.is_empty():
 		return self
+	
 
-	for i in range(0, 3, triangles.size()):
+	for i in range(0, triangles.size(), 3):
 		var triangle_info = TriangleInfo.new()
 		triangle_info.points = [] as Array[PointInfo]
 		triangle_info.points.append(_points[triangles[i]])
@@ -56,13 +69,20 @@ func set_blend_weight_callback(cb: Callable):
 var _prev_blend: Vector2 = Vector2.ONE * INF
 var _current_weights: Array[float]
 var _current_triangle: TriangleInfo
+
 func process(delta: float) -> IkPose3D:
 	_current_blend = _blend_weight_callback.call()
+
 	if not _current_blend.is_equal_approx(_prev_blend):
 		_current_triangle = GenericUtils.max_by(_triangles, func(x: TriangleInfo): 
-			return MathUtils.is_point_in_triangle(_current_blend, x.points[0].position, x.points[1].position, x.points[2].position))
+			var val = -(_current_blend.distance_squared_to( x.points[0].position) +\
+					_current_blend.distance_squared_to( x.points[1].position)+\
+					_current_blend.distance_squared_to( x.points[2].position))/3
+			return val
+					)
 
 		_prev_blend = _current_blend
+
 		_current_weights = MathUtils.get_barycentric_coordinates_2d(
 			_current_blend, 
 			_current_triangle.points[0].position, 
@@ -80,7 +100,7 @@ func process(delta: float) -> IkPose3D:
 		var transform_b = pose_b.node_to_transform[node]
 		var transform_c = pose_c.node_to_transform[node]
 
-		new_transform.origin = transform_a.origin * weights[0] + transform_b.origin * weights[1] * transform_c.origin * weights[2]
+		new_transform.origin = transform_a.origin * weights[0] + transform_b.origin * weights[1] + transform_c.origin * weights[2]
 		var new_quat: Quaternion = \
 			transform_a.basis.get_rotation_quaternion() * weights[0]\
 			+ transform_b.basis.get_rotation_quaternion() * weights[1]\

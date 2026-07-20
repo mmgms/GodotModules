@@ -9,14 +9,14 @@ var _speed_callback: Callable
 
 var _final_pose: IkPose3D
 
-func setup(ik_parent: Node3D, stored_pass_pose_r: IkStoredPose3D, stored_reach_pose_r: IkStoredPose3D):
+func setup(ik_parent: Node3D, stored_pass_pose_r: IkStoredPose3D, stored_reach_pose_r: IkStoredPose3D, make_symmetric: bool = true):
 	_final_pose = IkPose3D.new()
 	_cubic_interpolator = AnimationUtilities.CubicInterpolator.new()
 	_ik_target_parent = ik_parent
 	var _pass_pose = _convert_stored_to_ik_pose(ik_parent, stored_pass_pose_r)
 	var _reach_pose = _convert_stored_to_ik_pose(ik_parent, stored_reach_pose_r)
 
-	_pose_sequence = _build_pose_sequence(_pass_pose, _reach_pose)
+	_pose_sequence = _build_pose_sequence(_pass_pose, _reach_pose, make_symmetric)
 	return self
 
 func get_current_angle():
@@ -71,11 +71,17 @@ func _update_stride_wheel_angle(delta):
 	var angular_speed = current_speed/_stride_wheel_radius
 	_current_angle = wrapf(_current_angle + angular_speed * delta, 0, TAU)
 
+func _build_pose_sequence(pass_ik_pose_r: IkPose3D, reach_ik_pose_r: IkPose3D, make_symmetric: bool) -> Array[IkPose3D]:
 
-func _build_pose_sequence(pass_ik_pose_r: IkPose3D, reach_ik_pose_r: IkPose3D) -> Array[IkPose3D]:
-
-	var pass_ik_pose_l = _get_simmetric_pose(pass_ik_pose_r)
-	var reach_ik_pose_l = _get_simmetric_pose(reach_ik_pose_r)
+	var pass_ik_pose_l
+	var reach_ik_pose_l
+	if make_symmetric:
+		pass_ik_pose_l = _get_simmetric_pose(pass_ik_pose_r)
+		reach_ik_pose_l = _get_simmetric_pose(reach_ik_pose_r)
+	else:
+		pass_ik_pose_l = pass_ik_pose_r.duplicate()
+		reach_ik_pose_l = reach_ik_pose_r.duplicate()
+		
 	var poses_seq: Array[IkPose3D] = []
 	#poses_seq.assign([pass_ik_pose_r, reach_ik_pose_r, pass_ik_pose_l, reach_ik_pose_l])
 	var arr = [pass_ik_pose_r, reach_ik_pose_r, pass_ik_pose_l, reach_ik_pose_l]

@@ -183,9 +183,10 @@ static func area_of_triangle_2d(a: Vector2, b: Vector2, c: Vector2) -> float:
 static func area_of_polygon_2d(points: Array[Vector2]) -> float:
 
 	var sum = 0.0
-	for i in points.size() - 1:
+	for i in points.size():
+		var next_idx = wrapi(i+1, 0, points.size())
 		var current = points[i]
-		var next = points[i +1]
+		var next = points[next_idx]
 		sum += (next.x - current.x) *(current.y + next.y)
 
 	return abs(sum/2.0)
