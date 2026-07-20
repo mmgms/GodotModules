@@ -88,6 +88,9 @@ func process(delta: float) -> IkPose3D:
 			_current_triangle.points[0].position, 
 			_current_triangle.points[1].position, 
 			_current_triangle.points[2].position)
+
+		var weight_sum = _current_weights.reduce(func(accum, x): return accum +x, 0)
+		_current_weights.assign(_current_weights.map(func(x): return x /weight_sum))
 	
 	var weights = _current_weights
 	var pose_a = _current_triangle.points[0].node.process(delta)
