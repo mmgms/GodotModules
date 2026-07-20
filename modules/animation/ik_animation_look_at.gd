@@ -32,7 +32,7 @@ func set_get_target_position_callback(cb):
 	_get_target_position_callback = cb
 	return self
 
-func set_primary_secondary_limit(primary_limit: float, secondary_limit: float):
+func set_primary_secondary_limit_deg(primary_limit: float, secondary_limit: float):
 	_primary_limit = primary_limit
 	_secondary_limit = secondary_limit
 	return self

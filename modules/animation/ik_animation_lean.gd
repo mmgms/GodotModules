@@ -23,7 +23,7 @@ func set_enabled(enable: bool):
 func process(delta: float) -> IkPose3D:
 	var prev_pose = _prev_node.process(delta)
 	if _enabled:
-		_apply_lean(delta)
+		_apply_lean(delta, prev_pose)
 
 	return prev_pose
 
@@ -34,7 +34,7 @@ func set_acceleration_callback(cb: Callable):
 	return self
 
 
-func _apply_lean(delta):
+func _apply_lean(delta, pose: IkPose3D):
 	var accell = _acceleration_callback.call()
 	
 	var lean_multi = 8.0#8.0
@@ -56,4 +56,5 @@ func _apply_lean(delta):
 
 	var rot: Quaternion = _lean_interpolator.y * Basis.from_euler(Vector3(0, _node.global_rotation.y, 0.0)).get_rotation_quaternion()
 	
-	_node.global_basis = Basis(rot)
+	#_node.global_basis = Basis(rot)
+	pose.node_to_transform[_node].basis = _node.get_parent().global_basis.inverse() * Basis(rot)

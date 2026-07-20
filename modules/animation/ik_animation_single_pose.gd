@@ -1,13 +1,17 @@
 extends IkAnimationNode
 class_name IkAnimationSinglePose
 
-var target_pose: IkPose3D
+var _original_pose: IkPose3D
+
+var _working_pose: IkPose3D
 
 func setup(ik_parent: Node3D, stored_pose: IkStoredPose3D):
-	target_pose = _convert_stored_to_ik_pose(ik_parent, stored_pose)
+	_original_pose = _convert_stored_to_ik_pose(ik_parent, stored_pose)
+	_working_pose = _original_pose.duplicate()
 	return self
 
 
 
-func process(delta: float):
-	return target_pose
+func process(_delta: float):
+	_working_pose.assign(_original_pose)
+	return _working_pose

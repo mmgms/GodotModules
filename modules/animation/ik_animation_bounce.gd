@@ -29,7 +29,7 @@ func set_angle_callback_from_walk_cycle_node(walk_cycle: IkAnimationWalkCycle):
 	return self
 
 func set_ampl_callback_from_character3d(character: CharacterBody3D):
-	_ampl_callback = func(): return  min(0.1/(character.velocity.length() + 0.01), 0.1)
+	_ampl_callback = func(): return  min(0.1/(character.velocity.length() + 0.01), 0.03)
 	return self
 
 func set_enabled(enable: bool):
