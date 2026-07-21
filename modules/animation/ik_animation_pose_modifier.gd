@@ -5,13 +5,11 @@ var _prev_node: IkAnimationNode
 
 var _enabled: bool
 
-var _node: Node3D
 
 func _get_debug_string() -> String:
 	return _get_debug_string_modifier(_prev_node)
 
-func setup(node: Node3D, prev_node: IkAnimationNode):
-	_node = node
+func setup(prev_node: IkAnimationNode):
 	_prev_node = prev_node
 	return self
 
