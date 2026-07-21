@@ -18,6 +18,9 @@ func duplicate() -> Grid2D:
 	var new_grid = Grid2D.new(_size_x, _size_y)
 	new_grid._data = _data.duplicate_deep()
 	return new_grid
+	
+func get_size() -> Vector2i:
+	return Vector2i(_size_x, _size_y)
 
 
 func is_on_edge_veci(vec: Vector2i) -> bool:
@@ -29,6 +32,7 @@ func is_on_edge(x: int, y: int) -> bool:
 
 func fill(value: Variant):
 	_data.fill(value)
+	return self
 	
 func get_at(x: int, y: int) -> Variant:
 	assert(is_in_bounds(x, y))
@@ -37,6 +41,7 @@ func get_at(x: int, y: int) -> Variant:
 func set_at(x: int, y: int, value: Variant):
 	assert(is_in_bounds(x, y))
 	_data[x + y * _size_x] = value
+	return self
 
 
 func is_in_bounds(x: int, y: int) -> bool:
@@ -50,6 +55,7 @@ func get_at_veci(vec: Vector2i) -> Variant:
 func set_at_veci(vec: Vector2i, value: Variant):
 	assert(is_in_bounds_veci(vec))
 	set_at(vec.x, vec.y, value)
+	return self
 
 
 func is_in_bounds_veci(vec: Vector2i) -> bool:
