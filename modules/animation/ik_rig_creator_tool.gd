@@ -20,11 +20,12 @@ extends Node
 
 @export_tool_button("Generate") var generation_function = _generate
 @export_tool_button("Reset Ik Nodes Pose") var reset_function = _reset
+@export_tool_button("Reset Selected Nodes Ik Pose") var reset_selected_function = _reset_selected_nodes
 
-@export var ik_pose_save_name: String
-@export_tool_button("Save Ik Pose") var save_function = _save
-@export var ik_pose_load_name: String
-@export_tool_button("Load Ik Pose") var load_function = _load
+@export var ik_stored_pose: IkStoredPose3D
+@export_tool_button("Update Ik Stored Pose") var update_function = _update
+
+@export_tool_button("Load Ik Stored Pose") var load_function = _load
 
 var hand_prefix = "Hand"
 var foot_prefix = "Foot"
@@ -179,6 +180,31 @@ func _reset():
 		for s2 in IkType.values():
 			for s3 in IkSide.values():
 				_reset_limb_ik(s1 as IkLimb, s2 as IkType, s3 as IkSide)
+
+func _reset_selected_nodes():
+	
+	var selected_nodes = EditorInterface.get_selection().get_selected_nodes()
+
+	if selected_nodes.size() == 0:
+		return
+
+	var root = ik_rig_parent.get_child(0)
+	var hip = root.get_node("Hip")
+	var neck = hip.get_node("Neck")
+
+	if selected_nodes.has(root):
+		root.global_position = _get_bone_global_transform(hip_bone_name).origin
+	if selected_nodes.has(hip):
+		hip.global_transform = _get_bone_global_transform(hip_bone_name)
+	if selected_nodes.has(neck):
+		neck.global_transform = _get_bone_global_transform(neck_bone_name)
+
+	for s1 in IkLimb.values():
+		for s2 in IkType.values():
+			for s3 in IkSide.values():
+				var node = _get_node(s1, s2, s3)
+				if selected_nodes.has(node):
+					_reset_limb_ik(s1, s2, s3)
 	
 func _reset_limb_ik(limb: IkLimb, type: IkType, side: IkSide):
 	var node = _get_node(limb, type, side)
@@ -246,19 +272,17 @@ func _get_ik_nodes() -> Array[Node]:
 				nodes.append(_get_node(s1 as IkLimb, s2 as IkType, s3 as IkSide))
 	return nodes
 	
-func _save():
-	var new_pose = IkStoredPose3D.new()
-	new_pose.name = ik_pose_save_name
+func _update():
+	var pose = ik_stored_pose
+	if pose == null:
+		return
+
 	var nodes = _get_ik_nodes()
 	for node in nodes:
-		new_pose.node_path_to_transform[ik_rig_parent.get_path_to(node)] = node.transform
-	
-	var rel_path = EditorInterface.get_edited_scene_root().scene_file_path.get_base_dir()
-	ResourceSaver.save(new_pose, "%s/%s.tres" % [rel_path, ik_pose_save_name])
+		pose.node_path_to_transform[ik_rig_parent.get_path_to(node)] = node.transform
 	
 func _load():
-	var rel_path = EditorInterface.get_edited_scene_root().scene_file_path.get_base_dir()
-	var pose = ResourceLoader.load("%s/%s.tres" % [rel_path, ik_pose_load_name], "", ResourceLoader.CACHE_MODE_IGNORE) as IkStoredPose3D
+	var pose = ik_stored_pose
 	if pose == null:
 		return
 	for elem_path in pose.node_path_to_transform:
