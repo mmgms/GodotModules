@@ -65,13 +65,14 @@ func _ready() -> void:
 	var item1 = InventoryItem.new(0, Grid2D.new(1, 1).fill(true))
 	var item2 = InventoryItem.new(1,  Grid2D.new(1, 2).fill(true))
 	var item3 = InventoryItem.new(2,  Grid2D.new(2, 2).fill(true).set_at_veci(Vector2i.RIGHT, false))
+	var item4 = InventoryItem.new(3, Grid2D.new(3, 1).fill(true))
 	
-	_all_items.assign([item1, item2, item3])
+	_all_items.assign([item1, item2, item3, item4])
 
 	await get_tree().process_frame
 
 	for j in range(3):
-		for i in range(3):
+		for i in range(_all_items.size()):
 			_place_item(i, _get_center_random_placement_position(_all_items[i].grid.get_size()))
 
 func _get_center_random_placement_position(item_extents: Vector2i):
@@ -116,13 +117,22 @@ var current_rotation_idx: int
 func _get_pos_from_grid_idx(idx):
 	return (Vector2(idx) + Vector2.ONE * 0.5) * _slot_size + grid_container.position
 
+func _get_slot_panel_from_grid_idx(idx: Vector2i) -> SlotPanel:
+	var child_idx = idx.y * grid_container.columns + idx.x
+	if not child_idx < grid_container.get_child_count() or child_idx < 0:
+		return null
+	assert(child_idx < grid_container.get_child_count())
+	return grid_container.get_child(child_idx)
+
 func _physics_process(_delta: float) -> void:
-	DebugDraw2D.set_text("is_dragging:", is_dragging)
-	DebugDraw2D.set_text("currently_hovered:", currently_hovered_scene)
+	#DebugDraw2D.set_text("is_dragging:", is_dragging)
+	#DebugDraw2D.set_text("currently_hovered:", currently_hovered_scene)
 	for cell in _grid:
 		if cell.data.is_occupied:
-			pass
-			MyDebugDraw2d.point(_get_pos_from_grid_idx(cell.point), _delta, Color.BLUE)
+			_get_slot_panel_from_grid_idx(cell.point).set_occupied()
+			#MyDebugDraw2d.point(_get_pos_from_grid_idx(cell.point), _delta, Color.BLUE)
+		else:
+			_get_slot_panel_from_grid_idx(cell.point).set_empty()
 			
 	if not is_dragging:
 		if Input.is_action_just_pressed("click"):
@@ -162,8 +172,8 @@ func _physics_process(_delta: float) -> void:
 			pass
 
 		var can_place = _check_can_place(item, new_center_norm, current_rotation_idx)
-		DebugDraw2D.set_text("can_place", can_place)
-		MyDebugDraw2d.point(grid_container.position + new_center_norm * _slot_size, _delta, Color.REBECCA_PURPLE, 2.0)
+		#DebugDraw2D.set_text("can_place", can_place)
+		#MyDebugDraw2d.point(grid_container.position + new_center_norm * _slot_size, _delta, Color.REBECCA_PURPLE, 2.0)
 		if Input.is_action_just_pressed("rotate"):
 			current_rotation_idx = wrapi(current_rotation_idx+1, 0, _rotations.size())
 			currently_dragged_scene.rotation = _rotations[current_rotation_idx]
@@ -188,7 +198,7 @@ func _get_grid_idx_from_center_and_rotation(extents: Vector2i, rel_grid_idx: Vec
 	var rel_center = Vector2(extents)/2.0
 	var vec_to_rel_grid_idx = Vector2(rel_grid_idx) + Vector2.ONE/2 - rel_center
 	var rotated_vec_to_rel_grid_idx = vec_to_rel_grid_idx.rotated(_rotations[rotation])
-	return Vector2i((position_center + rotated_vec_to_rel_grid_idx))
+	return Vector2i((position_center + rotated_vec_to_rel_grid_idx).floor())
 
 func _check_can_place(item: ItemInfo, position_center: Vector2, rotation: int):
 
@@ -199,10 +209,16 @@ func _check_can_place(item: ItemInfo, position_center: Vector2, rotation: int):
 		var pos = data.point
 		var final_pos = _get_grid_idx_from_center_and_rotation(item.grid_filled.get_size(), pos, position_center, rotation)
 		if not _grid.is_in_bounds_veci(final_pos) or _grid.get_at_veci(final_pos).is_occupied:
-			MyDebugDraw2d.point(_get_pos_from_grid_idx(final_pos), get_physics_process_delta_time(), Color.RED)
+			#MyDebugDraw2d.point(_get_pos_from_grid_idx(final_pos), get_physics_process_delta_time(), Color.RED)
+			var slot_panel = _get_slot_panel_from_grid_idx(final_pos)
+			if slot_panel:
+				if _grid.is_in_bounds_veci(final_pos):
+					slot_panel.set_cannot_place()
 			occupied_spot_found = true
 			continue
-		MyDebugDraw2d.point(_get_pos_from_grid_idx(final_pos), get_physics_process_delta_time(), Color.GREEN)
+
+		_get_slot_panel_from_grid_idx(final_pos).set_can_place()
+		#MyDebugDraw2d.point(_get_pos_from_grid_idx(final_pos), get_physics_process_delta_time(), Color.GREEN)
 	return not occupied_spot_found
 
 var _items_placed: Array[ItemPlacement]
