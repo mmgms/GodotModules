@@ -1,4 +1,8 @@
 class_name GridPlacementController
+## Simple grid placement controller, need to set callbacks for interaction, grab position, grid offset and currently hovered scene
+## keeps track of placement of scenes, need to add_scene with appropriate item info to specify grid extents and positions occupied
+## in grid_filled
+## assumes rotations occur around the center
 
 var _rotations = [0, -PI/2, PI,  PI/2]
 class SlotInfo:
