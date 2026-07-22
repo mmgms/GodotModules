@@ -1,4 +1,4 @@
-extends Node
+class_name GridPlacementController
 
 var _rotations = [0, -PI/2, PI,  PI/2]
 class SlotInfo:
@@ -33,47 +33,22 @@ class ItemInfo:
 		grid_filled.set_at_veci(pos, filled)
 		return self
 
-	
-@export var grid_container: GridContainer
-@export var slot_items_container: Node2D
-@export var slot_scene: PackedScene
-@export var slot_item_scene: PackedScene
-
-class InventoryItem:
-	var sprite_idx: int
-	var grid: Grid2D
-	var info: ItemInfo
-	
-	func _init(_idx, _grid) -> void:
-		sprite_idx = _idx
-		grid = _grid
-		info = ItemInfo.new(self).set_grid(grid)
-
 var _grid: Grid2D
-var _all_items: Array[InventoryItem]
 
-var _slot_size = 16
-var _scene_to_item_placement: Dictionary[SlotItemScene, ItemPlacement]
-func _ready() -> void:
-	_grid = Grid2D.new(6, 4)
+signal slot_status_changed(pos: Vector2i, status: SlotStatus)
+signal scene_grabbed(scene: Node)
+signal scene_released(scene: Node)
+signal could_not_place_scene_initial(scene: Node)
+
+enum SlotStatus {Empty, Occupied, CanPlace, CannotPlace}
+
+var _slot_size: float
+
+func setup(grid_size: Vector2i, slot_size: float):
+	_grid = Grid2D.new(grid_size.x, grid_size.y)
 	_grid.fill(SlotInfo.new())
-	grid_container.columns = _grid.get_size().x
-	for data in _grid:
-		var instance = slot_scene.instantiate()
-		grid_container.add_child(instance)
-
-	var item1 = InventoryItem.new(0, Grid2D.new(1, 1).fill(true))
-	var item2 = InventoryItem.new(1,  Grid2D.new(1, 2).fill(true))
-	var item3 = InventoryItem.new(2,  Grid2D.new(2, 2).fill(true).set_at_veci(Vector2i.RIGHT, false))
-	var item4 = InventoryItem.new(3, Grid2D.new(3, 1).fill(true))
-	
-	_all_items.assign([item1, item2, item3, item4])
-
-	await get_tree().process_frame
-
-	for j in range(3):
-		for i in range(_all_items.size()):
-			_place_item(i, _get_center_random_placement_position(_all_items[i].grid.get_size()))
+	_slot_size = slot_size
+	return self
 
 func _get_center_random_placement_position(item_extents: Vector2i):
 	var size = _grid.get_size()
@@ -84,76 +59,115 @@ func _get_center_random_placement_position(item_extents: Vector2i):
 func _get_top_left_position_from_center(pos: Vector2, extents: Vector2i):
 	return Vector2i(pos - Vector2(extents)/2.0)
 
-func _place_item(idx: int, position_center: Vector2):
-	var item = _all_items[idx]
 
-	if not _check_can_place(item.info, position_center, 0):
-		return
+var _is_dragging: bool
+var _currently_hovered_scene: SlotItemScene
+var _currently_dragged_scene: SlotItemScene
+var _currently_dragged_item_placement: ItemPlacement
+var _prev_center_pos: Vector2
+var _grab_offset: Vector2
+var _current_rotation_idx: int
 
-	var item_placement = _add_item_placed(item.info, position_center, 0)
+var _select_scene_callback: Callable
+var _place_scene_callback: Callable
+var _rotate_scene_callback: Callable
 
-	var instance = slot_item_scene.instantiate() as SlotItemScene
-	slot_items_container.add_child(instance)
+var _grab_position_callback: Callable
+var _grid_offset_callback: Callable
 
-	instance.setup(grid_container.position + position_center * _slot_size, item.sprite_idx, item.grid, _slot_size)
-	instance.entered.connect(func(): currently_hovered_scene = instance)
-	instance.exited.connect(func(): 
-		if currently_hovered_scene == instance:
-			currently_hovered_scene = null
-		)
+var _currently_hovered_scene_callback: Callable
+
+var _set_scene_position_callback: Callable
+var _set_scene_rotation_callback: Callable
+
+var _get_scene_position_callback: Callable
+var _get_scene_rotation_callback: Callable
+
+# () -> bool
+func set_select_scene_callback(cb: Callable):
+	_select_scene_callback = cb
+	return self
+
+# () -> bool
+func set_place_scene_callback(cb: Callable):
+	_place_scene_callback = cb
+	return self
+
+# () -> bool
+func set_rotate_scene_callback(cb: Callable):
+	_rotate_scene_callback = cb
+	return self
+
+# () -> Vector2
+func set_grab_position_callback(cb: Callable):
+	_grab_position_callback = cb
+	return self
+
+# () -> Vector2
+func set_grid_offset_callback(cb: Callable):
+	_grid_offset_callback = cb
+	return self
+
+# (Node, Vector2) -> ()
+func set_set_scene_position_callback(cb: Callable):
+	_set_scene_position_callback = cb
+	return self
+
+# (Node, float) -> ()
+func set_set_scene_rotation_callback(cb: Callable):
+	_set_scene_rotation_callback = cb
+	return self
+
+# (Node) -> (Vector2)
+func set_get_scene_position_callback(cb: Callable):
+	_get_scene_position_callback = cb
+	return self
+
+# () -> (Node)
+func set_currently_hovered_scene_callback(cb: Callable):
+	_currently_hovered_scene_callback = cb
+	return self
 
 
-	_scene_to_item_placement[instance] = item_placement
+var _scene_to_item_placement: Dictionary[Node, ItemPlacement]
+var _scene_to_item_info: Dictionary[Node, ItemInfo]
 
-
-var is_dragging: bool
-var currently_hovered_scene: SlotItemScene
-var currently_dragged_scene: SlotItemScene
-var currently_dragged_item_placement: ItemPlacement
-var prev_center_pos: Vector2
-var mouse_offset: Vector2
-var current_rotation_idx: int
-
-func _get_pos_from_grid_idx(idx):
-	return (Vector2(idx) + Vector2.ONE * 0.5) * _slot_size + grid_container.position
-
-func _get_slot_panel_from_grid_idx(idx: Vector2i) -> SlotPanel:
-	var child_idx = idx.y * grid_container.columns + idx.x
-	if not child_idx < grid_container.get_child_count() or child_idx < 0:
-		return null
-	assert(child_idx < grid_container.get_child_count())
-	return grid_container.get_child(child_idx)
-
-func _physics_process(_delta: float) -> void:
-	#DebugDraw2D.set_text("is_dragging:", is_dragging)
-	#DebugDraw2D.set_text("currently_hovered:", currently_hovered_scene)
+func process(_delta: float) -> void:
 	for cell in _grid:
 		if cell.data.is_occupied:
-			_get_slot_panel_from_grid_idx(cell.point).set_occupied()
-			#MyDebugDraw2d.point(_get_pos_from_grid_idx(cell.point), _delta, Color.BLUE)
+			slot_status_changed.emit(cell.point, SlotStatus.Occupied)
 		else:
-			_get_slot_panel_from_grid_idx(cell.point).set_empty()
+			slot_status_changed.emit(cell.point, SlotStatus.Empty)
 			
-	if not is_dragging:
-		if Input.is_action_just_pressed("click"):
-			if currently_hovered_scene:
-				currently_dragged_scene = currently_hovered_scene
-				currently_dragged_scene.set_enabled(false)
-				currently_dragged_item_placement = _scene_to_item_placement[currently_dragged_scene]
-				prev_center_pos = currently_dragged_scene.position
-				mouse_offset = prev_center_pos - slot_items_container.get_local_mouse_position()
-				is_dragging = true
-				current_rotation_idx = currently_dragged_item_placement.rotation
-				_remove_item_placement(currently_dragged_item_placement)
+	if not _is_dragging:
+		if _select_scene_callback.call():
+			_currently_hovered_scene = _currently_hovered_scene_callback.call()
+			if _currently_hovered_scene:
+				_currently_dragged_scene = _currently_hovered_scene
+
+				scene_grabbed.emit(_currently_dragged_scene)
+
+				_currently_dragged_item_placement = _scene_to_item_placement[_currently_dragged_scene]
+				_prev_center_pos = _get_scene_position_callback.call(_currently_dragged_scene)
+
+				_grab_offset = _prev_center_pos - _grab_position_callback.call()
+
+				_is_dragging = true
+				if _currently_dragged_item_placement:
+					_current_rotation_idx = _currently_dragged_item_placement.rotation
+
+					_remove_item_placement(_currently_dragged_item_placement)
 	else:
-		var mouse_pos = slot_items_container.get_local_mouse_position()
-		currently_dragged_scene.position = mouse_pos + mouse_offset
+		var grab_position = _grab_position_callback.call()
 
-		var item = currently_dragged_item_placement.item
+		_set_scene_position_callback.call(_currently_dragged_scene, grab_position + _grab_offset)
 
-		var offset_norm = ((currently_dragged_scene.position - prev_center_pos)/_slot_size).snapped(Vector2.ONE)
-		var prev_center_norm = (prev_center_pos - grid_container.position)/_slot_size
+		assert(_scene_to_item_info.has(_currently_dragged_scene))
+		var item = _scene_to_item_info[_currently_dragged_scene]
 
+		var scene_pos = _get_scene_position_callback.call(_currently_dragged_scene)
+		var offset_norm = ((scene_pos - _prev_center_pos)/_slot_size).snapped(Vector2.ONE)
+		var prev_center_norm = (_prev_center_pos - _grid_offset_callback.call())/_slot_size
 
 		var reg_extents = item.grid_filled.get_size()
 		var new_center_norm 
@@ -162,35 +176,47 @@ func _physics_process(_delta: float) -> void:
 		else:
 			var extents = reg_extents
 			var flipped_extents = Vector2i(reg_extents.y, reg_extents.x)
-			if current_rotation_idx % 2 == 1:
+			if _current_rotation_idx % 2 == 1:
 				extents = flipped_extents
 			var extents_center = extents/2.0
 			var grid_offset = Vector2(fposmod(extents_center.x,1), fposmod(extents_center.y,1))
-			var rel_pos_norm = (currently_dragged_scene.position - grid_container.position)/_slot_size
+			var rel_pos_norm = (scene_pos - _grid_offset_callback.call())/_slot_size
 			new_center_norm = (rel_pos_norm - grid_offset).snapped(Vector2.ONE) + grid_offset
 
 			pass
 
-		var can_place = _check_can_place(item, new_center_norm, current_rotation_idx)
-		#DebugDraw2D.set_text("can_place", can_place)
-		#MyDebugDraw2d.point(grid_container.position + new_center_norm * _slot_size, _delta, Color.REBECCA_PURPLE, 2.0)
-		if Input.is_action_just_pressed("rotate"):
-			current_rotation_idx = wrapi(current_rotation_idx+1, 0, _rotations.size())
-			currently_dragged_scene.rotation = _rotations[current_rotation_idx]
+		var can_place = _check_can_place(item, new_center_norm, _current_rotation_idx)
 
-		if Input.is_action_just_released("click"):
+		if _rotate_scene_callback.call():
+			_current_rotation_idx = wrapi(_current_rotation_idx+1, 0, _rotations.size())
+
+			_set_scene_rotation_callback.call(_currently_dragged_scene, _rotations[_current_rotation_idx])
+
+		if _place_scene_callback.call():
 			if can_place:
-				var new_placement = _add_item_placed(item, new_center_norm, current_rotation_idx)
-				currently_dragged_scene.position = grid_container.position + new_center_norm * _slot_size
-				_scene_to_item_placement[currently_dragged_scene] = new_placement
+				var new_placement = _add_item_placed(item, new_center_norm, _current_rotation_idx)
+				var new_pos = _grid_offset_callback.call() + new_center_norm * _slot_size
+
+				_set_scene_position_callback.call(_currently_dragged_scene, new_pos)
+
+				_scene_to_item_placement[_currently_dragged_scene] = new_placement
+				scene_released.emit(_currently_dragged_scene)
 			else:
-				var new_placement = _add_item_placed(item, currently_dragged_item_placement.position_center, currently_dragged_item_placement.rotation)
-				currently_dragged_scene.rotation = _rotations[currently_dragged_item_placement.rotation]
-				currently_dragged_scene.position = prev_center_pos
-				_scene_to_item_placement[currently_dragged_scene] = new_placement
-			currently_dragged_scene.set_enabled(true)
-			currently_dragged_scene = null
-			is_dragging = false
+				if _currently_dragged_item_placement:
+					var new_placement = _add_item_placed(item, _currently_dragged_item_placement.position_center, _currently_dragged_item_placement.rotation)
+					var updated_rotation = _rotations[_currently_dragged_item_placement.rotation]
+					var updated_position = _prev_center_pos
+
+					_set_scene_position_callback.call(_currently_dragged_scene, updated_position)
+					_set_scene_rotation_callback.call(_currently_dragged_scene, updated_rotation)
+
+					_scene_to_item_placement[_currently_dragged_scene] = new_placement
+					scene_released.emit(_currently_dragged_scene)
+				else:
+					could_not_place_scene_initial.emit(_currently_dragged_scene)
+
+			_currently_dragged_scene = null
+			_is_dragging = false
 
 
 func _get_grid_idx_from_center_and_rotation(extents: Vector2i, rel_grid_idx: Vector2i, position_center: Vector2, rotation: int):
@@ -200,7 +226,22 @@ func _get_grid_idx_from_center_and_rotation(extents: Vector2i, rel_grid_idx: Vec
 	var rotated_vec_to_rel_grid_idx = vec_to_rel_grid_idx.rotated(_rotations[rotation])
 	return Vector2i((position_center + rotated_vec_to_rel_grid_idx).floor())
 
-func _check_can_place(item: ItemInfo, position_center: Vector2, rotation: int):
+
+func add_scene_info(node: Node, info: ItemInfo):
+	_scene_to_item_info[node] = info
+	return self
+
+func can_place_at_position_center_rotation(item: ItemInfo, position_center: Vector2, rotation: int):
+	return _check_can_place(item, position_center, rotation, false)
+
+func add_scene_at_position_center_rotation(scene: Node, info: ItemInfo, position_center: Vector2, rotation: int):
+	add_scene_info(scene, info)
+	var item = _scene_to_item_info[scene]
+	var placement = _add_item_placed(item, position_center, rotation)
+	_scene_to_item_placement[scene] = placement
+	return self
+
+func _check_can_place(item: ItemInfo, position_center: Vector2, rotation: int, should_emit: bool=true):
 
 	var occupied_spot_found = false
 	for data in item.grid_filled:
@@ -209,16 +250,15 @@ func _check_can_place(item: ItemInfo, position_center: Vector2, rotation: int):
 		var pos = data.point
 		var final_pos = _get_grid_idx_from_center_and_rotation(item.grid_filled.get_size(), pos, position_center, rotation)
 		if not _grid.is_in_bounds_veci(final_pos) or _grid.get_at_veci(final_pos).is_occupied:
-			#MyDebugDraw2d.point(_get_pos_from_grid_idx(final_pos), get_physics_process_delta_time(), Color.RED)
-			var slot_panel = _get_slot_panel_from_grid_idx(final_pos)
-			if slot_panel:
+
+			if should_emit:
 				if _grid.is_in_bounds_veci(final_pos):
-					slot_panel.set_cannot_place()
+					slot_status_changed.emit(final_pos, SlotStatus.CannotPlace)
 			occupied_spot_found = true
 			continue
+		if should_emit:
+			slot_status_changed.emit(final_pos, SlotStatus.CanPlace)
 
-		_get_slot_panel_from_grid_idx(final_pos).set_can_place()
-		#MyDebugDraw2d.point(_get_pos_from_grid_idx(final_pos), get_physics_process_delta_time(), Color.GREEN)
 	return not occupied_spot_found
 
 var _items_placed: Array[ItemPlacement]
@@ -249,13 +289,7 @@ func _remove_item_placement(placement: ItemPlacement):
 			continue
 		var pos = data.point
 		var final_pos = _get_grid_idx_from_center_and_rotation(placement.item.grid_filled.get_size(), pos, placement.position_center, placement.rotation)
-		#MyDebugDraw2d.point(_get_pos_from_grid_idx(final_pos), 1.0, Color.ORANGE)
 
 		_grid.set_at_veci(final_pos, SlotInfo.new())
 
 	_items_placed.erase(placement)
-
-
-func _get_rotated_veci(x, y, rot):
-	var res = Vector2i(Vector2(x, y).rotated(_rotations[rot]).round())
-	return res
