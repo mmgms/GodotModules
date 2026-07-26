@@ -30,7 +30,7 @@ class TransitionInfo:
 		hide_on_finish = _hide
 		return self
 
-enum Transitions {FadeFromBlack, CurtainClose, SlideToBlack, GridReveal, BlinderWipe, CenterWipe, Iris, Spike}
+enum Transitions {FadeFromBlack, CurtainClose, SlideToBlack, GridReveal, BlinderWipe, CenterWipe, IrisOpen, Spike}
 
 class ShaderParameters:
 	enum TransitionType {Basic, Mask, Shape, Clock}
@@ -85,7 +85,7 @@ func play_transition(req: TransitionInfo):
 	var params = ShaderParameters.new()
 	
 	match type:
-		Transitions.Iris:
+		Transitions.IrisOpen:
 			params.transition_type = ShaderParameters.TransitionType.Shape
 			params.position = Vector2(0.5, 0.5)
 			params.edges = 64

@@ -154,6 +154,10 @@ class FrequencyLimiter:
 		_cb = cb
 		if call_initial:
 			_time_passed = _time + 1.0
+		
+	func set_initial_time(time: float):
+		_time_passed = time
+		return self
 
 	func process(delta: float):
 		_time_passed += delta

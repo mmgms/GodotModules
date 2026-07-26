@@ -8,7 +8,7 @@ var _guard: Callable
 
 var _taken_callback: Callable
 
-func _init(from, to, event="", guard=null) -> void:
+func _init(from: HsmState, to: HsmState, event="", guard=null) -> void:
 	_from = from
 	_to = to
 	_event = event

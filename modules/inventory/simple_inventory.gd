@@ -37,6 +37,7 @@ var _next_selected_idx: int = -1:
 		next_selection_updated.emit(val)
 
 func set_capacity(capacity: int):
+	_capacity = capacity
 	_items.resize(capacity)
 	if _capacity < _items.size():
 		assert(false)
@@ -108,7 +109,7 @@ func confirm_next_selection():
 	inventory_changed.emit(_items, _current_used_idx, _next_selected_idx)
 
 func find_index(callable: Callable):
-	for i in _items:
+	for i in _items.size():
 		if not _items[i]:
 			continue
 
@@ -116,6 +117,9 @@ func find_index(callable: Callable):
 			return i
 
 	return -1
+	
+func get_at_index(idx: int):
+	return _items[idx]
 
 func remove_at_index(idx: int):
 	remove_item(_items[idx])

@@ -65,8 +65,8 @@ func _get_top_left_position_from_center(pos: Vector2, extents: Vector2i):
 
 
 var _is_dragging: bool
-var _currently_hovered_scene: SlotItemScene
-var _currently_dragged_scene: SlotItemScene
+var _currently_hovered_scene: Node
+var _currently_dragged_scene: Node
 var _currently_dragged_item_placement: ItemPlacement
 var _prev_center_pos: Vector2
 var _grab_offset: Vector2

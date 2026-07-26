@@ -51,7 +51,8 @@ func step():
 		return
 	var status = _root._step()
 	if status == DialogueNode.Status.Done:
-		_over_callback.call()
+		if _over_callback:
+			_over_callback.call()
 		is_done = true
 
 func reset():

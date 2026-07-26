@@ -105,16 +105,21 @@ static func clampedv3(vector: Vector3, limit: float) -> Vector3:
 	
 
 class TimeSpan:
+	var hours: int
 	var minutes: int
 	var seconds: int
 
-	func get_string() -> String:
+	func get_string_minutes_seconds() -> String:
 		return "%d:%02d" % [minutes, seconds]
+
+	func get_string_hour_minutes() -> String:
+		return "%d:%02d" % [hours, minutes]
 
 static func get_timespan(seconds: float) -> TimeSpan:
 	var timespan = TimeSpan.new()
 	timespan.seconds = int(round(seconds)) % 60
-	timespan.minutes = floor(round(seconds)/60)
+	timespan.minutes = int(floor(round(seconds)/60)) % 60
+	timespan.hours = floor(round(seconds)/3600)
 	return timespan
 
 	
