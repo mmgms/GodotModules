@@ -54,15 +54,6 @@ func setup(grid_size: Vector2i, slot_size: float):
 	_slot_size = slot_size
 	return self
 
-func _get_center_random_placement_position(item_extents: Vector2i):
-	var size = _grid.get_size()
-	var top_left = Vector2(randi_range(0, size.x), randi_range(0, size.y))# + Vector2.ONE * 0.5
-
-	return Vector2(top_left) + Vector2(item_extents)/2.0
-
-func _get_top_left_position_from_center(pos: Vector2, extents: Vector2i):
-	return Vector2i(pos - Vector2(extents)/2.0)
-
 
 var _is_dragging: bool
 var _currently_hovered_scene: Node
