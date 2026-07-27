@@ -19,6 +19,7 @@ class LSystemString:
 	func _init(_symbols: Array[LSystemSymbol]) -> void:
 		symbols = _symbols
 
+
 	func duplicate():
 		var new_string = LSystemString.new(symbols.duplicate())
 		return new_string
@@ -42,13 +43,37 @@ class LSystemProductionRule:
 	var string_in: LSystemString
 	var string_out: LSystemString
 
-	func _init(_symbols_in: Array[LSystemSymbol], _symbols_out: Array[LSystemSymbol]) -> void:
-		string_in = LSystemString.new(_symbols_in)
-		string_out = LSystemString.new(_symbols_out)
+	var out_symbols_cb: Callable
+
+	func _init(_string_in: LSystemString) -> void:
+		string_in = _string_in
+
+	func set_out_string(_string_out: LSystemString):
+		string_out = _string_out
+		out_symbols_cb = func(): return string_out
+		return self
+
+	# () -> LSystemString
+	func set_get_out_string_cb(cb: Callable):
+		out_symbols_cb = cb
+		return self
+
+	
+	func get_string_out() -> LSystemString:
+		return out_symbols_cb.call()
+
+
 
 class LSystem:
 	var symbols: Array[LSystemSymbol]
 	var production_rules: Array[LSystemProductionRule]
+
+	func get_lstring_from_string(string_in: String) -> LSystemString:
+		var sym_array: Array[LSystemSymbol] = []
+		sym_array.assign(Array(string_in.split()).map(
+			func(x): return symbols.filter(func(sym): return sym.name == x)[0]))
+		var lstring = LSystemString.new(sym_array)
+		return lstring
 
 	func add_symbol(symbol: LSystemSymbol):
 		symbols.append(symbol)
@@ -58,19 +83,8 @@ class LSystem:
 		production_rules.append(rule)
 		return self
 
-	func add_production_rule_from_string(string_in: String, string_out: String):
-		var l_string_in: Array[LSystemSymbol] = []
-		var l_string_out: Array[LSystemSymbol] = []
-
-		l_string_in.assign(Array(string_in.split()).map(func(x): return symbols.filter(func(sym): return sym.name == x)[0]))
-		l_string_out.assign(Array(string_out.split()).map(func(x): return symbols.filter(func(sym): return sym.name == x)[0]))
-
-		production_rules.append(LSystemProductionRule.new(l_string_in, l_string_out))
-		return self
-
-	func generate_from_axiom(axiom: Array[LSystemSymbol], iterations: int) -> LSystemString:
-		var initial_string = LSystemString.new(axiom)
-		var current_string = initial_string.duplicate()
+	func generate_from_axiom(axiom: LSystemString, iterations: int) -> LSystemString:
+		var current_string = axiom.duplicate()
 		for i in range(iterations):
 			current_string = _get_updated_string(current_string)
 		return current_string
@@ -110,6 +124,6 @@ class LSystem:
 				return check_res
 		
 		check_res.matches = true
-		check_res.string_to_substitute = prod_rule.string_out
+		check_res.string_to_substitute = prod_rule.get_string_out()
 		check_res.offset = off_i
 		return check_res
