@@ -41,8 +41,8 @@ func push_back(value: Variant):
 		_end_idx = _start_idx
 		return
 	var next_idx = wrapi(_end_idx+1, 0, _data.size())
-	_data[_end_idx] = value
 	_end_idx = next_idx
+	_data[_end_idx] = value
 
 func pop_front() -> Variant:
 	if is_empty():
@@ -53,7 +53,9 @@ func pop_front() -> Variant:
 
 	var next_idx = wrapi(_start_idx+1, 0, _data.size())
 	var value = _data[_start_idx]
+	_data[_start_idx] = null
 	_start_idx = next_idx
+	
 	return value
 
 
@@ -65,12 +67,7 @@ func _iter_next(iter):
 	iter[0] += 1
 	return iter[0] < size()
 
-class IterData:
-	var idx: int
-	var data: Variant
 
 func _iter_get(idx):
-	var data = IterData.new()
-	data.idx = wrapi(_start_idx+ idx, 0, size())
-	data.data = _data[data.idx]
-	return data
+	var _idx = wrapi(_start_idx + idx, 0, _data.size())
+	return _data[_idx]
