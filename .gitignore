@@ -6,6 +6,7 @@ project.godot
 /addons/*
 /godot_state_charts_examples/
 /tests/
+/videos/
 .editorconfig
 !/addons/graph_builder2d/
 !/addons/graph_builder3d/
