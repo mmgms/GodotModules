@@ -170,3 +170,8 @@ static func get_timestamp_seconds():
 
 static func get_elapsed_seconds(timestamp: float):
 	return get_timestamp_seconds() - timestamp
+
+
+static func get_viewport_size(node: Node):
+	var window_size = node.get_viewport().get_visible_rect().size
+	return window_size
