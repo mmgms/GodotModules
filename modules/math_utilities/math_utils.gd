@@ -202,23 +202,23 @@ static func is_point_in_triangle(p: Vector2, a: Vector2, b: Vector2, c: Vector2)
 
 
 # given a Vector2 return the Vector2i on a grid with tile_size
-static func get_grid_idx_from_pos(vec: Vector2, tile_size: Vector2):
+static func get_grid_idx_from_pos(vec: Vector2, tile_size: Vector2) -> Vector2i:
 	var norm_vec = vec/tile_size
-	return norm_vec.floor()
+	return Vector2i(norm_vec.floor())
 
 
 # given a Vector2i on a grid with tile_size return the centered Vector2 position
-static func get_centered_position_from_grid_idx(idx: Vector2i, tile_size: Vector2):
+static func get_centered_position_from_grid_idx(idx: Vector2i, tile_size: Vector2) -> Vector2:
 	return (Vector2(idx) + Vector2.ONE * 0.5) * tile_size
 
 
 # given a Vector2 snap it to the center position on a grid with tile_size
-static func get_grid_snapped_centered_position(vec: Vector2, tile_size: Vector2):
+static func get_grid_snapped_centered_position(vec: Vector2, tile_size: Vector2) -> Vector2:
 	return get_centered_position_from_grid_idx(get_grid_idx_from_pos(vec, tile_size), tile_size)
 
 
 # returns a Vector2 with its angle snapped according to snap_size_rad
-static func get_rotation_snapped_direction(vec: Vector2, snap_size_rad: float):
+static func get_rotation_snapped_direction(vec: Vector2, snap_size_rad: float) -> Vector2:
 	var angle = vec.angle()
 	var angle_snapped = snapped(angle, snap_size_rad)
 	return Vector2.RIGHT.rotated(angle_snapped) * vec.length()
