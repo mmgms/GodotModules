@@ -47,13 +47,16 @@ func _on_event(event: StringName):
 	
 func _on_enter():
 	super._on_enter()
+	if not _current_running:
+		_current_running = _initial_state
+		_current_running._on_enter()
 	
 func _on_exit():
 	if _exit_callback:
 		_exit_callback.call()
 	if _current_running:
 		_current_running._on_exit()
-		#_current_running = null
+		_current_running = null
 
 
 func _get_debug_string() -> String:
@@ -77,8 +80,8 @@ func _handle_transition(from: HsmState, target: HsmState):
 		from._on_exit()
 	
 	if target == self:
-		_on_enter()
 		_current_running = _initial_state
+		_on_enter()
 		_initial_state._on_enter()
 		return
 		
