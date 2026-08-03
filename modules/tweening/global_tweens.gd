@@ -2628,3 +2628,13 @@ func morph_color_sequence(node: CanvasItem, colors: Array, step_dur: float = 0.3
 
 func morph_color_sequence_stop(node: CanvasItem) -> void:
 	_morph_color_active.erase(node)
+
+
+
+func zoom_pan_camera_2d(camera: Camera2D, final_pos: Vector2, final_zoom: float, duration: float):
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(camera, "zoom", Vector2.ONE * final_zoom, duration)
+	tween.tween_property(camera, "position", final_pos, duration)
+	
+	return tween

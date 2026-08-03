@@ -164,7 +164,7 @@ func setup():
 			.add_transition(
 				HsmTransition.new(_airborne_state, _grounded_state, _land_event)
 			)
-			.set_process_callback(func(delta):
+			.set_process_callback(func(_delta):
 				if _jump_requested_callback.call():
 					if not _was_jump_pressed:
 						_is_jump_just_pressed = true
