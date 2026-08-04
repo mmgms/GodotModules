@@ -4,10 +4,37 @@ extends Node2D
 class GameState:
 	var grid: Grid2D
 
+	func get_opponent(player: Player):
+		return Player.Black if player == Player.White else Player.White
+
+	func get_state_per_move(move: Move) -> GameState:
+		var new_state = self.duplicate()
+		new_state.execute_move(move)
+		return new_state
+
+	func evaluate_state_for_player(player: Player):
+		var opponent = get_opponent(player)
+		var player_tiles = get_tiles_per_player(player)
+		var opponent_tiles = get_tiles_per_player(opponent)
+
+		var player_pawns = player_tiles.filter(func(x: Vector2i): 
+			return grid.get_at_veci(x).piece_type == PieceType.Pawn).size()
+		var opponent_pawns = opponent_tiles.filter(func(x: Vector2i): 
+			return grid.get_at_veci(x).piece_type == PieceType.Pawn).size()
+		
+		var player_kings = player_tiles.filter(func(x: Vector2i): 
+			return grid.get_at_veci(x).piece_type == PieceType.King).size()
+		var opponent_kings = opponent_tiles.filter(func(x: Vector2i): 
+			return grid.get_at_veci(x).piece_type == PieceType.King).size()
+
+		return 2 * player_kings + player_pawns - 2 * opponent_kings - opponent_pawns
+
 	func duplicate() -> GameState:
-		var game_state = GameState.new()
-		game_state.grid = grid.duplicate()
-		return game_state
+		var new_state = GameState.new()
+		new_state.grid = grid.duplicate()
+		for data in grid:
+			new_state.grid.set_at_veci(data.point, data.data.duplicate())
+		return new_state
 
 	func get_tiles_per_player(player: Player) -> Array[Vector2i]:
 		var tiles: Array[Vector2i]
@@ -26,12 +53,12 @@ class GameState:
 		for tile in get_tiles_per_player(player):
 			var available_moves = _get_available_moves_per_tile(tile)
 			moves_to_append.append(available_moves)
-			var has_jump_moves = available_moves.filter(func(x): return (x as Move).piece_captured == true)
+			var has_jump_moves = available_moves.filter(func(x): return x is MultiJump)
 			if has_jump_moves:
 				jump_moves_found = true
 		
 		for moves in moves_to_append:
-			var has_jump_moves = moves.filter(func(x): return (x as Move).piece_captured == true)
+			var has_jump_moves = moves.filter(func(x): return x is MultiJump)
 			if jump_moves_found and not has_jump_moves:
 				continue
 			all_moves.append_array(moves)
@@ -66,8 +93,13 @@ class GameState:
 
 		return res
 
-	func _get_jump_moves_recursive(tile_info: TileInfo, start_pos: Vector2i, current_move: Move, moves: Array[Move], directions: Array[Vector2i]):
+	func _get_jump_moves_recursive(tile_info: TileInfo, start_pos: Vector2i, current_move: MultiJump, 
+		moves: Array[Move], directions: Array[int]):
+			
 		var offsets_jump = [Vector2i(2, 2), Vector2i(-2, 2)]
+
+		if not current_move.jumps.size() == 0:
+			moves.append(current_move)
 
 		for offset_jump in offsets_jump:
 			for direction in directions:
@@ -77,18 +109,23 @@ class GameState:
 					continue
 				if grid.get_at_veci(start_pos + offset).is_occupied:
 					continue
+				
+				var new_multi = MultiJump.new()
+				new_multi.jumps = current_move.jumps.duplicate()
+
 				var jump_idx = start_pos + Vector2i(offset/2.0)
 				var jump_tile = grid.get_at_veci(jump_idx) as TileInfo
-				var jump_tile_already_processed = moves.filter(func(x): return (x as Move).piece_captrured_idx == jump_idx).size() > 0
+				var jump_tile_already_processed = current_move.jumps.filter(func(x): return (x as Move).piece_captured_idx == jump_idx).size() > 0
 				if jump_tile.is_occupied and jump_tile.player != tile_info.player and not jump_tile_already_processed:
-					var move = Move.new()
+					var move = SimpleMove.new()
 					move.start_idx = start_pos
 					move.end_idx = start_pos + offset
 					move.piece_captured = true
-					move.piece_captrured_idx = jump_idx
+					move.piece_captured_idx = jump_idx
 					if _is_promotion_idx(move.end_idx) and not tile_info.piece_type == PieceType.King:
 						move.piece_promoted = true
-					moves.append(move)
+					new_multi.jumps.append(move)
+					_get_jump_moves_recursive(tile_info, move.end_idx, new_multi, moves, directions)
 
 
 	func _get_available_moves_per_tile(idx: Vector2i) -> Array[Move]:
@@ -100,28 +137,8 @@ class GameState:
 		if tile_info.piece_type == PieceType.King:
 			directions.assign([-1, 1])
 
-		var offsets_jump = [Vector2i(2, 2), Vector2i(-2, 2)]
-
 		var jump_moves: Array[Move] = []
-		for offset_jump in offsets_jump:
-			for direction in directions:
-				var offset = Vector2i(offset_jump)
-				offset.y *= direction
-				if not grid.is_in_bounds_veci(idx + offset):
-					continue
-				if grid.get_at_veci(idx + offset).is_occupied:
-					continue
-				var jump_idx = idx + Vector2i(offset/2.0)
-				var jump_tile = grid.get_at_veci(jump_idx) as TileInfo
-				if jump_tile.is_occupied and jump_tile.player != tile_info.player:
-					var move = Move.new()
-					move.start_idx = idx
-					move.end_idx = idx + offset
-					move.piece_captured = true
-					move.piece_captrured_idx = jump_idx
-					if _is_promotion_idx(move.end_idx) and not tile_info.piece_type == PieceType.King:
-						move.piece_promoted = true
-					jump_moves.append(move)
+		_get_jump_moves_recursive(tile_info, idx, MultiJump.new(), jump_moves, directions)
 		
 		if jump_moves.size() > 0:
 			return jump_moves
@@ -137,7 +154,7 @@ class GameState:
 				if grid.get_at_veci(idx + offset).is_occupied:
 					continue
 
-				var move = Move.new()
+				var move = SimpleMove.new()
 				move.start_idx = idx
 				move.end_idx = idx + offset
 				if _is_promotion_idx(move.end_idx) and not tile_info.piece_type == PieceType.King:
@@ -147,6 +164,10 @@ class GameState:
 		return moves
 
 	func execute_move(move: Move):
+		if move is MultiJump:
+			for simple in move.jumps:
+				execute_move(simple)
+			return
 		var tile_info = grid.get_at_veci(move.start_idx) as TileInfo
 		tile_info.is_occupied = false
 		var dest_tile = grid.get_at_veci(move.end_idx)
@@ -155,19 +176,40 @@ class GameState:
 		dest_tile.piece_type = tile_info.piece_type
 
 		if move.piece_captured:
-			var captured_piece_tile = grid.get_at_veci(move.piece_captrured_idx)
+			var captured_piece_tile = grid.get_at_veci(move.piece_captured_idx)
 			captured_piece_tile.is_occupied = false
 
 		if move.piece_promoted:
 			dest_tile.piece_type = PieceType.King
 
 class Move:
+	func get_start_idx():
+		return Vector2i.ZERO
+
+	func get_end_idx():
+		return Vector2i.ZERO
+
+class MultiJump extends Move:
+	var jumps: Array[SimpleMove]
+
+	func get_start_idx():
+		return jumps[0].get_start_idx()
+
+	func get_end_idx():
+		return jumps[-1].get_end_idx()
+
+class SimpleMove extends Move:
 	var start_idx: Vector2i
 	var end_idx: Vector2i
 	var piece_promoted: bool
 	var piece_captured: bool
-	var piece_captrured_idx: Vector2i
-	var piece_captrured_idices: Array[Vector2i]
+	var piece_captured_idx: Vector2i
+
+	func get_start_idx():
+		return start_idx
+
+	func get_end_idx():
+		return end_idx
 
 enum GameOutcome {Running, Win, Draw}
 
@@ -176,6 +218,7 @@ class GameOutcomeResult:
 	var winner: Player
 
 enum Player {White, Black}
+	
 enum TileColor {White, Black}
 enum PieceType {Pawn, King}
 class TileInfo:
@@ -183,6 +226,14 @@ class TileInfo:
 	var is_occupied: bool
 	var player: Player
 	var piece_type: PieceType
+
+	func duplicate():
+		var new_tile_info = TileInfo.new()
+		new_tile_info.tile_color = tile_color
+		new_tile_info.is_occupied = is_occupied
+		new_tile_info.player = player
+		new_tile_info.piece_type = piece_type
+		return new_tile_info
 
 var black_atlas_idx = Vector2i(0, 0)
 var white_atlas_idx = Vector2i(1, 0)
@@ -278,17 +329,26 @@ func _ready() -> void:
 	var move_preview = HsmAtomicState.new().set_name("Move Preview")\
 		.set_enter_callback(func ():
 			_current_available_moves.clear()
+			#_player_for_min_max = player_color
+			#minimax(0, true, game_state.duplicate(), 5, -INF, INF)
+#
+			#_player_move = _best_move
+			#game_hsm.send_event(player_confirmed_move)
+			return
 			)\
+		.set_process_callback(func(delta):
+			MyDebugDraw2d.point(pieces_parent.get_local_mouse_position(), delta))\
 		.set_unhandled_input_callback(func(event: InputEvent):
+			#return
 			if event.is_action_pressed("rmb"):
 				var mouse_pos = pieces_parent.get_global_mouse_position()
 				var idx_selected = MathUtils.get_grid_idx_from_pos(mouse_pos, _tile_size)
 				var enemy_moves = game_state.get_available_moves(ai_color)
 				create_gizmos(idx_selected, enemy_moves)
 			if event.is_action_pressed("click"):
-				var mouse_pos = pieces_parent.get_global_mouse_position()
+				var mouse_pos = pieces_parent.get_local_mouse_position()
 				var idx_selected = MathUtils.get_grid_idx_from_pos(mouse_pos, _tile_size)
-				var matches_move = _current_available_moves.filter(func(x): return (x as Move).end_idx == idx_selected)
+				var matches_move = _current_available_moves.filter(func(x): return (x as Move).get_end_idx() == idx_selected)
 				if matches_move.size() > 0:
 					clear_gizmos()
 					_player_move = matches_move[0]
@@ -303,7 +363,7 @@ func _ready() -> void:
 					return
 				clear_gizmos()
 				_current_available_moves = game_state.get_available_moves(player_color)\
-					.filter(func(x): return (x as Move).start_idx == idx_selected)
+					.filter(func(x): return (x as Move).get_start_idx() == idx_selected)
 				create_gizmos(idx_selected, _current_available_moves)
 			)
 				
@@ -335,9 +395,16 @@ func _ready() -> void:
 	game_hsm.setup()
 
 func _update_visuals(move: Move):
+	if move is MultiJump:
+		for simple in move.jumps:
+			await _update_visuals(simple)
+			await get_tree().create_timer(0.5).timeout
+		return
 	for child in pieces_parent.get_children():
+		if not is_instance_valid(child):
+			continue
 		var idx = MathUtils.get_grid_idx_from_pos(child.global_position, _tile_size)
-		if move.piece_captured and move.piece_captrured_idx == idx:
+		if move.piece_captured and move.piece_captured_idx == idx:
 			child.queue_free()
 		if move.start_idx == idx:
 			var tween := create_tween() 
@@ -357,7 +424,7 @@ func create_gizmos(piece_idx, moves: Array[Move]):
 	for move in moves:
 		var instance = gizmo_scene.instantiate() as CellSelectScene
 		gizmo_parent.add_child(instance)
-		instance.setup(MathUtils.get_centered_position_from_grid_idx(move.end_idx, _tile_size), false)
+		instance.setup(MathUtils.get_centered_position_from_grid_idx(move.get_end_idx(), _tile_size), false)
 
 func _unhandled_input(event: InputEvent) -> void:
 	game_hsm.handle_input_event(event)
@@ -365,16 +432,20 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	game_hsm.process(delta)
 	debug_game_hsm_label.text = game_hsm.get_debug_string()
+	#for data in game_state.grid:
+		#if data.data.is_occupied: 
+			#var color = Color.BLACK if data.data.player == Player.Black else Color.WHITE
+			#MyDebugDraw2d.point(MathUtils.get_centered_position_from_grid_idx(data.point, _tile_size), delta, color)
 
 func _player_process_cb(_delta):
 	player_turn.process(_delta)
 
 func _ai_enter_cb():
-	var move_selected: Move
-	var moves = game_state.get_available_moves(ai_color)
-	if moves.size() > 0:
-		move_selected = moves[0]
+	_player_for_min_max = ai_color
+	minimax(0, true, game_state.duplicate(), 5, -INF, INF)
 
+	var move_selected = _best_move
+	
 	game_state.execute_move(move_selected)
 	check_game_over()
 	await _update_visuals(move_selected)
@@ -385,3 +456,61 @@ func check_game_over():
 	if res.outcome != GameOutcome.Running:
 		game_res = res
 		game_hsm.send_event(game_over_event)
+
+
+func minimax(cur_depth: int, max_turn: bool, state: GameState,
+			target_depth: int, alpha: float, beta: float):
+	var res = game_state.get_game_status()
+	if res.outcome != GameOutcome.Running:
+		if res.outcome == GameOutcome.Win:
+			if res.winner != ai_color:
+				return -INF
+			else:
+				return INF
+		else:
+			return -INF
+
+	if cur_depth >= target_depth:
+		return state.evaluate_state_for_player(ai_color)
+
+	if max_turn:
+		return _max_value(cur_depth, state, target_depth, alpha, beta)
+	else:
+		return _min_value(cur_depth, state, target_depth, alpha, beta)
+
+class ResMove:
+	var move: Move
+	var value: float
+
+var _player_for_min_max: Player
+var _best_move: Move
+func _max_value(cur_depth: int, state: GameState,
+			target_depth: int, alpha: float, beta: float):
+
+	var val = -INF
+	for move in state.get_available_moves(_player_for_min_max):
+		var new_state = state.get_state_per_move(move)
+		var value_next_move = \
+			minimax(cur_depth + 1, false, new_state, target_depth, alpha, beta)
+		if value_next_move > val and cur_depth == 0:
+			_best_move = move
+		val = max(val, value_next_move)
+		if val >= beta:
+			return val
+		alpha = max(alpha, val)
+
+	return val
+
+func _min_value(cur_depth: int, state: GameState,
+			target_depth: int, alpha: float, beta: float):
+
+	var val = INF
+	for move in state.get_available_moves(state.get_opponent(_player_for_min_max)):
+		var new_state = state.get_state_per_move(move)
+		val = min(val, 
+			minimax(cur_depth + 1, true, new_state, target_depth, alpha, beta))
+		if val <= alpha:
+			return val
+		beta = min(beta, val)
+
+	return val
