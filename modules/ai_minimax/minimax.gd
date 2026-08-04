@@ -3,21 +3,24 @@ class_name MiniMax
 
 var _target_depth: int = 3
 
+var _game_state_evaluator: AiDefinitions.GameStateEvaluator
+
 func set_target_depth(target: int):
 	_target_depth = target
 	return self
 
-func get_best_move(state: AiDefinitions.GameState):
+func get_best_move(state: AiDefinitions.GameState, evaluator: AiDefinitions.GameStateEvaluator):
+	_game_state_evaluator = evaluator
 	_minimax_recursive(0, true, state, -INF, INF)
 
 	return _best_move
 
 func _minimax_recursive(cur_depth: int, max_turn: bool, state: AiDefinitions.GameState, alpha: float, beta: float):
 	if state.is_over():
-		return state.get_termination_value()
+		return _game_state_evaluator.get_termination_value(state)
 
 	if cur_depth >= _target_depth:
-		return state.evaluate_state()
+		return _game_state_evaluator.evaluate_state(state)
 
 	if max_turn:
 		return _max_value(cur_depth, state, alpha, beta)

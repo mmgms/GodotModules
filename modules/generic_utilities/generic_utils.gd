@@ -175,3 +175,10 @@ static func get_elapsed_seconds(timestamp: float):
 static func get_viewport_size(node: Node):
 	var window_size = node.get_viewport().get_visible_rect().size
 	return window_size
+
+
+static func pick_random_weighted(arr: Array, custom_func: Callable):
+	assert(arr.size() > 0)
+	var weights = arr.map(func(x): return custom_func.call(x))
+	var rng = RandomNumberGenerator.new()
+	return arr[rng.rand_weighted(weights)]

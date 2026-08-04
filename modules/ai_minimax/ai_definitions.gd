@@ -5,9 +5,6 @@ class GameState:
 
 	func get_duplicated() -> GameState:
 		return null
-		
-	func evaluate_state() -> float:
-		return 0.0
 	
 	func get_available_moves() -> Array[Variant]:
 		return []
@@ -24,5 +21,10 @@ class GameState:
 	func is_over() -> bool:
 		return false
 	
-	func get_termination_value() -> float:
+
+class GameStateEvaluator:
+	func evaluate_state(_game_state: GameState) -> float:
+		return 0.0
+	
+	func get_termination_value(_game_state: GameState) -> float:
 		return 0.0

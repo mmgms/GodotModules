@@ -2,6 +2,8 @@ class_name MonteCarloTreeSearch
 ## Implementation of monte carlo tree search
 
 
+var _game_state_evaluator: AiDefinitions.GameStateEvaluator
+
 class MCTSNode:
 	var depth: int
 	var state: AiDefinitions.GameState
@@ -11,8 +13,11 @@ class MCTSNode:
 	var visits: int
 	var wins: float
 	var untried_actions: Array
+	var is_opponent: bool
+	var evaluator: AiDefinitions.GameStateEvaluator
 
-	func _init(_state: AiDefinitions.GameState, _parent=null, _action=null, _depth=0):
+	func _init(_state: AiDefinitions.GameState, _evaluator: AiDefinitions.GameStateEvaluator, _parent=null, _action=null, _depth=0, _is_opponent=false):
+		evaluator = _evaluator
 		depth = _depth
 		state = _state
 		parent = _parent
@@ -20,7 +25,11 @@ class MCTSNode:
 		children = []
 		visits = 0
 		wins = 0.0
-		untried_actions = state.get_available_moves()
+		is_opponent = _is_opponent
+		if is_opponent:
+			untried_actions = state.get_available_moves_opponent()
+		else:
+			untried_actions = state.get_available_moves()
 
 	# Check if node is terminal
 	func is_terminal():
@@ -32,11 +41,12 @@ class MCTSNode:
 
 	# Expand node
 	func expand():
-		var action_to_expand = self.untried_actions.pop_back()
+		var action_to_expand = untried_actions.pick_random()
+		untried_actions.erase(action_to_expand)
 
 		var new_state = state.get_new_state_per_move(action_to_expand)
 
-		var child = MCTSNode.new(new_state, self, action_to_expand, depth + 1)
+		var child = MCTSNode.new(new_state, evaluator, self, action_to_expand, depth + 1, not is_opponent)
 		self.children.append(child)
 		return child
 
@@ -48,23 +58,20 @@ class MCTSNode:
 
 		return GenericUtils.max_by(children, func(child): return ucb(child, c))
 
-	func rollout(max_rollout_depth: int = 25):
+	func rollout(max_rollout_depth: int = 30):
 		var new_state = state.get_duplicated()
 
+		var is_opponent_turn = is_opponent
 		for i in range(max_rollout_depth):
 			if new_state.is_over():
-				return new_state.get_termination_value()
+				return evaluator.get_termination_value(new_state)
+			
+			var moves = new_state.get_available_moves() if not is_opponent_turn else new_state.get_available_moves_opponent()
+			new_state.execute_move(moves.pick_random())
 
-			var av_moves = new_state.get_available_moves()
-			new_state.execute_move(av_moves.pick_random())
+			is_opponent_turn = not is_opponent_turn
 
-			if new_state.is_over():
-				return new_state.get_termination_value()
-
-			var opp_moves = new_state.get_available_moves_opponent()
-			new_state.execute_move(opp_moves.pick_random())
-
-		return 0.5
+		return evaluator.get_termination_value(new_state)
 
 
 	func backpropagate(value):
@@ -80,12 +87,13 @@ class MCTSNode:
 		var explore = c * sqrt(log(self.visits) / child.visits)
 		return exploit + explore
 
-func get_best_move(state: AiDefinitions.GameState, iter=50):
+func get_best_move(state: AiDefinitions.GameState, evaluator: AiDefinitions.GameStateEvaluator, iter=50):
+	_game_state_evaluator = evaluator
 	return _mcts_search(state, iter)
 
 
 func _mcts_search(root_state: AiDefinitions.GameState, iterations: int):
-	var root = MCTSNode.new(root_state.get_duplicated())
+	var root = MCTSNode.new(root_state.get_duplicated(), _game_state_evaluator)
 	
 	for i in range(iterations):
 		var node = root
