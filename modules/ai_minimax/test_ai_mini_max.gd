@@ -257,7 +257,7 @@ var _current_available_moves: Array[Move]
 var _player_move: Move
 var player_color = Player.White
 var ai_color = Player.Black
-
+var ai_player: bool = true
 var move_confirm_event = "MoveConfirm"
 var game_over_event = "GameOver"
 
@@ -329,17 +329,19 @@ func _ready() -> void:
 	var move_preview = HsmAtomicState.new().set_name("Move Preview")\
 		.set_enter_callback(func ():
 			_current_available_moves.clear()
-			#_player_for_min_max = player_color
-			#minimax(0, true, game_state.duplicate(), 5, -INF, INF)
-#
-			#_player_move = _best_move
-			#game_hsm.send_event(player_confirmed_move)
+			if ai_player:
+				_player_for_min_max = player_color
+				minimax(0, true, game_state.duplicate(), 5, -INF, INF)
+
+				_player_move = _best_move
+				game_hsm.send_event(player_confirmed_move)
 			return
 			)\
 		.set_process_callback(func(delta):
 			MyDebugDraw2d.point(pieces_parent.get_local_mouse_position(), delta))\
 		.set_unhandled_input_callback(func(event: InputEvent):
-			#return
+			if ai_player:
+				return
 			if event.is_action_pressed("rmb"):
 				var mouse_pos = pieces_parent.get_global_mouse_position()
 				var idx_selected = MathUtils.get_grid_idx_from_pos(mouse_pos, _tile_size)
@@ -471,7 +473,7 @@ func minimax(cur_depth: int, max_turn: bool, state: GameState,
 			return -INF
 
 	if cur_depth >= target_depth:
-		return state.evaluate_state_for_player(ai_color)
+		return state.evaluate_state_for_player(_player_for_min_max)
 
 	if max_turn:
 		return _max_value(cur_depth, state, target_depth, alpha, beta)
