@@ -68,8 +68,10 @@ class State:
 			return grid.get_at_veci(x).piece_type == PieceType.King).size()
 		var opponent_kings = opponent_tiles.filter(func(x: Vector2i): 
 			return grid.get_at_veci(x).piece_type == PieceType.King).size()
+			
+		var val = 2 * player_kings + player_pawns - 2 * opponent_kings - opponent_pawns
 
-		return 2 * player_kings + player_pawns - 2 * opponent_kings - opponent_pawns
+		return val
 
 	func duplicate() -> State:
 		var new_state = State.new()

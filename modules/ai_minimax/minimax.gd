@@ -1,37 +1,18 @@
 class_name MiniMax
 ## Implementation of min max algorithm with alpha beta pruning
 
-class GameState:
-	func evaluate_state() -> float:
-		return 0.0
-	
-	func get_available_moves() -> Array[Variant]:
-		return []
-
-	func get_available_moves_opponent() -> Array[Variant]:
-		return []
-	
-	func get_new_state_per_move(_move: Variant) -> GameState:
-		return null
-
-	func is_over() -> bool:
-		return false
-	
-	func get_termination_value() -> float:
-		return 0.0
-
 var _target_depth: int = 3
 
 func set_target_depth(target: int):
 	_target_depth = target
 	return self
 
-func get_best_move(state: GameState):
+func get_best_move(state: AiDefinitions.GameState):
 	_minimax_recursive(0, true, state, -INF, INF)
 
 	return _best_move
 
-func _minimax_recursive(cur_depth: int, max_turn: bool, state: GameState, alpha: float, beta: float):
+func _minimax_recursive(cur_depth: int, max_turn: bool, state: AiDefinitions.GameState, alpha: float, beta: float):
 	if state.is_over():
 		return state.get_termination_value()
 
@@ -44,7 +25,7 @@ func _minimax_recursive(cur_depth: int, max_turn: bool, state: GameState, alpha:
 		return _min_value(cur_depth, state, alpha, beta)
 
 var _best_move: Variant
-func _max_value(cur_depth: int, state: GameState, alpha: float, beta: float):
+func _max_value(cur_depth: int, state: AiDefinitions.GameState, alpha: float, beta: float):
 
 	var val = -INF
 	for move in state.get_available_moves():
@@ -60,7 +41,7 @@ func _max_value(cur_depth: int, state: GameState, alpha: float, beta: float):
 
 	return val
 
-func _min_value(cur_depth: int, state: GameState, alpha: float, beta: float):
+func _min_value(cur_depth: int, state: AiDefinitions.GameState, alpha: float, beta: float):
 
 	var val = INF
 	for move in state.get_available_moves_opponent():
