@@ -33,17 +33,20 @@ func add_child(state: HsmState):
 func _on_process(delta: float):
 	if _process_callback:
 		_process_callback.call(delta)
-	_current_running._on_process(delta)
+	if _current_running:
+		_current_running._on_process(delta)
 
 func _on_unhandled_input(event: InputEvent):
 	if _unhandled_input_callback:
 		_unhandled_input_callback.call(event)
-	_current_running._on_unhandled_input(event)
+	if _current_running:
+		_current_running._on_unhandled_input(event)
 	
 func _on_event(event: StringName):
 	if _event_callback:
 		_event_callback.call(event)
-	_current_running._on_event(event)
+	if _current_running:
+		_current_running._on_event(event)
 	
 func _on_enter():
 	super._on_enter()
