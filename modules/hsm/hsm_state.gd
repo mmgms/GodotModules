@@ -16,6 +16,15 @@ var _parent: HsmState = null
 
 var _hsm: Hsm
 
+func duplicate():
+	var hsm_state = HsmState.new()
+	hsm_state._process_callback = _process_callback
+	hsm_state._unhandled_input_callback = _unhandled_input_callback
+	hsm_state._enter_callback = _enter_callback
+	hsm_state._exit_callback = _exit_callback
+	hsm_state._name = _name
+	return hsm_state
+
 func _enter_first_time():
 	_on_enter()
 
@@ -42,6 +51,9 @@ func set_exit_callback(callback: Callable):
 	_exit_callback = callback
 	return self
 
+func set_event_callback(callback: Callable):
+	_event_callback = callback
+	return self
 
 func _on_process(delta: float):
 	if _process_callback:
