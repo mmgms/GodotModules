@@ -27,8 +27,25 @@ class TileInfo:
 
 class State:
 	var grid: Grid2D
+	var player_states: Dictionary[Player, PlayerState]
+
+	class PlayerState:
+		var has_king_been_moved: bool
+		var has_left_tower_been_moved: bool
+		var has_right_tower_been_moved: bool
+		var has_king_castled: bool
+
+		func duplicate() -> PlayerState:
+			var new_state = PlayerState.new()
+			new_state.has_king_been_moved = has_king_been_moved
+			new_state.has_left_tower_been_moved = has_left_tower_been_moved
+			new_state.has_right_tower_been_moved = has_right_tower_been_moved
+			new_state.has_king_castled = has_king_castled
+			return new_state
 	
 	func _init() -> void:
+		player_states[Player.Black] = PlayerState.new()
+		player_states[Player.White] = PlayerState.new()
 		grid = Grid2D.new(8, 8)
 		for data in grid:
 			var tile_info = TileInfo.new()
@@ -69,13 +86,28 @@ class State:
 		return new_state
 
 	func evaluate_state_for_player(player: Player):
-		return 0.0
+		var player_score = get_score_per_player(player)
+		var opponent_score = get_score_per_player(get_opponent(player))
+		return player_score - opponent_score
+
+	func get_score_per_player(player: Player):
+		var tiles_player = get_tiles_per_player(player)
+		var pawns = tiles_player.filter(func(x): return grid.get_at_veci(x).piece_type == PieceType.Pawn).size()
+		var rooks = tiles_player.filter(func(x): return grid.get_at_veci(x).piece_type == PieceType.Rock).size()
+		var horses = tiles_player.filter(func(x): return grid.get_at_veci(x).piece_type == PieceType.Horse).size()
+		var bishop = tiles_player.filter(func(x): return grid.get_at_veci(x).piece_type == PieceType.Bishop).size()
+		var queens = tiles_player.filter(func(x): return grid.get_at_veci(x).piece_type == PieceType.Queen).size()
+
+		return pawns + horses * 3 + bishop * 3 + rooks * 5 + queens * 9
 
 	func duplicate() -> State:
 		var new_state = State.new()
 		new_state.grid = grid.duplicate()
 		for data in grid:
 			new_state.grid.set_at_veci(data.point, data.data.duplicate())
+			
+		new_state.player_states[Player.Black] = player_states[Player.Black].duplicate()
+		new_state.player_states[Player.White] = player_states[Player.White].duplicate()
 		return new_state
 
 	func get_tiles_per_player(player: Player) -> Array[Vector2i]:
@@ -88,6 +120,70 @@ class State:
 	func _is_promotion_idx(idx: Vector2i):
 		return idx.y == 0 or idx.y == 7
 
+	func _add_promotion_moves_from_move(last_move: Move, all_moves: Array[Move]):
+		for new_piece_type in [PieceType.Horse, PieceType.Queen, PieceType.Bishop, PieceType.Rock]:
+			var move = Move.new() 
+			move.start_idx = last_move.start_idx
+			move.end_idx = last_move.end_idx
+			move.piece_captured = last_move.piece_captured
+			move.piece_captured_idx = last_move.piece_captured_idx
+			move.piece_promoted = true
+			move.piece_type_promoted = new_piece_type
+			all_moves.append(move)
+			
+	func _move_puts_king_in_threat(move: Move, player: Player, direction):
+		var new_state = get_state_per_move(move)
+		var tiles_opponent = get_tiles_per_player(get_opponent(player))
+		var tiles_controlled_by_opponent = new_state.get_tiles_controlled(get_opponent(player), tiles_opponent, direction * -1)
+
+		var is_king_threathened = tiles_controlled_by_opponent.filter(func(x): return new_state.grid.get_at_veci(x).piece_type == PieceType.King).size() > 0
+		return is_king_threathened
+
+	func _add_castling_move(player: Player, moves: Array[Move], tiles_player: Array[Vector2i], tiles_controlled_by_opponent: Array[Vector2i], right: bool):
+		if right and player_states[player].has_right_tower_been_moved:
+			return
+		
+		if not right and player_states[player].has_left_tower_been_moved:
+			return
+
+		var idx_king = tiles_player.filter(func(x): return grid.get_at_veci(x).piece_type == PieceType.King)[0]
+		var castling_tiles = [idx_king + Vector2i.RIGHT, idx_king + Vector2i.RIGHT * 2]
+		if not right:
+			castling_tiles = [idx_king + Vector2i.LEFT, idx_king + Vector2i.LEFT * 2, idx_king + Vector2i.LEFT * 3]
+
+		var is_castling_tiles_occupied = castling_tiles.filter(func (x): return grid.get_at_veci(x).is_occupied).size() > 0
+		if is_castling_tiles_occupied:
+			return
+
+		var is_castling_tile_threatened = castling_tiles.filter(func (x): return tiles_controlled_by_opponent.has(x)).size() > 0
+		if is_castling_tile_threatened:
+			return
+
+		var x_coord = 7
+		if not right:
+			x_coord = 0
+
+		var idx_tower_matching = tiles_player.filter(func(x): return grid.get_at_veci(x).piece_type == PieceType.Rock and x.x == x_coord)
+		if idx_tower_matching.size() == 0:
+			if right:
+				player_states[player].has_right_tower_been_moved = true
+			else:
+				player_states[player].has_left_tower_been_moved = true
+			return
+
+		var idx_tower = idx_tower_matching[0]
+		var castle_move = Move.new()
+		castle_move.start_idx = idx_king
+		castle_move.end_idx = idx_king + Vector2i.RIGHT * 2
+		if not right:
+			castle_move.end_idx = idx_king + Vector2i.LEFT * 2
+		castle_move.is_castling = true
+		castle_move.tower_piece_start = idx_tower
+		castle_move.tower_piece_end = idx_tower + Vector2i.LEFT * 2
+		if not right:
+			castle_move.tower_piece_end = idx_tower + Vector2i.RIGHT * 3
+		moves.append(castle_move)
+
 	func get_available_moves(player: Player) -> Array[Move]:
 		var all_moves: Array[Move] = []
 		var direction = -1 if player == Player.White else 1
@@ -95,61 +191,49 @@ class State:
 		var tiles_opponent = get_tiles_per_player(get_opponent(player))
 		var tiles_player = get_tiles_per_player(player)
 
-		var tiles_controlled_by_opponent = get_tiles_controlled(player, tiles_opponent, direction * -1)
+		var tiles_controlled_by_opponent = get_tiles_controlled(get_opponent(player), tiles_opponent, direction * -1)
 
 		var is_king_threathened = tiles_controlled_by_opponent.filter(func(x): return grid.get_at_veci(x).piece_type == PieceType.King).size() > 0
 
 		for tile in tiles_player:
 			var piece_type = grid.get_at_veci(tile).piece_type
 			var move_tiles = get_move_tiles_for_piece(tile, direction)
-			var last_move
 			for dest_tile in move_tiles:
 				var move = Move.new() 
 				move.start_idx = tile
 				move.end_idx = dest_tile
-				last_move = move
-				all_moves.append(move)
-				
-			if last_move and _is_promotion_idx(last_move.end_idx) and piece_type == PieceType.Pawn:
-				all_moves.pop_back()
-				for new_piece_type in [PieceType.Horse, PieceType.Queen, PieceType.Bishop, PieceType.Rock]:
-					var move = Move.new() 
-					move.start_idx = last_move.start_idx
-					move.end_idx = last_move.end_idx
-					move.piece_captured = last_move.piece_captured
-					move.piece_captured_idx = last_move.piece_captured_idx
-					move.piece_promoted = true
-					move.piece_type_promoted = new_piece_type
+				if _move_puts_king_in_threat(move, player, direction):
+					continue
+				if _is_promotion_idx(move.end_idx) and piece_type == PieceType.Pawn:
+					_add_promotion_moves_from_move(move, all_moves)
+				else:
 					all_moves.append(move)
-					
-			var capture_tiles = get_move_tiles_for_piece(tile, direction)
+	
+			var capture_tiles = get_capture_tiles_for_piece(tile, direction, player)
 			for dest_tile in capture_tiles:
 				var move = Move.new() 
 				move.start_idx = tile
 				move.end_idx = dest_tile
 				move.piece_captured = true
 				move.piece_captured_idx = dest_tile
-				last_move = move
-				all_moves.append(move)
-
-			if last_move and _is_promotion_idx(last_move.end_idx) and piece_type == PieceType.Pawn:
-				all_moves.pop_back()
-				for new_piece_type in [PieceType.Horse, PieceType.Queen, PieceType.Bishop, PieceType.Rock]:
-					var move = Move.new() 
-					move.start_idx = last_move.start_idx
-					move.end_idx = last_move.end_idx
-					move.piece_captured = last_move.piece_captured
-					move.piece_captured_idx = last_move.piece_captured_idx
-					move.piece_promoted = true
-					move.piece_type_promoted = new_piece_type
+				if _move_puts_king_in_threat(move, player, direction):
+					continue
+				if _is_promotion_idx(move.end_idx) and piece_type == PieceType.Pawn:
+					_add_promotion_moves_from_move(move, all_moves)
+				else:
 					all_moves.append(move)
+		
+		if not player_states[player].has_king_castled:
+			if not player_states[player].has_king_been_moved:
+				_add_castling_move(player, all_moves, tiles_player, tiles_controlled_by_opponent, true)
+				_add_castling_move(player, all_moves, tiles_player, tiles_controlled_by_opponent, false)
 
 		if is_king_threathened:
 			all_moves = all_moves.filter(func(move):
 				var new_state = get_state_per_move(move)
 				var new_opponent_tiles = new_state.get_tiles_per_player(get_opponent(player))
-				var new_tiles_controlled_by_opponent = get_tiles_controlled(player, new_opponent_tiles, direction * -1)
-				var is_king_threathened_after_move = new_tiles_controlled_by_opponent.filter(func(x): return grid.get_at_veci(x).piece_type == PieceType.King).size() > 0
+				var new_tiles_controlled_by_opponent = new_state.get_tiles_controlled(get_opponent(player), new_opponent_tiles, direction * -1)
+				var is_king_threathened_after_move = new_tiles_controlled_by_opponent.filter(func(x): return new_state.grid.get_at_veci(x).piece_type == PieceType.King).size() > 0
 				return not is_king_threathened_after_move
 			)
 		return all_moves
@@ -167,7 +251,7 @@ class State:
 		return [Vector2i.UP+Vector2i.LEFT, Vector2i.UP+Vector2i.RIGHT, Vector2i.DOWN+Vector2i.LEFT, Vector2i.DOWN+Vector2i.RIGHT]
 	
 	func _append_if_not_null(arr, val):
-		if val:
+		if val != null:
 			arr.append(val)
 			
 	func get_capture_tiles_for_piece(idx: Vector2i, direction: int, player: Player) -> Array[Vector2i]:
@@ -208,9 +292,9 @@ class State:
 		var piece_type = grid.get_at_veci(idx).piece_type as PieceType
 		match piece_type:
 			PieceType.Pawn:
-				tiles.append_array(get_move_tiles_along_direction(Vector2i(idx.x, direction), idx, 1))
+				tiles.append_array(get_move_tiles_along_direction(Vector2i(0, direction), idx, 1))
 				if idx.y == 1 or idx.y == 6:
-					tiles.append_array(get_move_tiles_along_direction(Vector2i(idx.x, direction * 2), idx, 1))
+					tiles.append_array(get_move_tiles_along_direction(Vector2i(0, direction * 2), idx, 1))
 			PieceType.Rock:
 				for dir in get_straight_directions():
 					tiles.append_array(get_move_tiles_along_direction(dir, idx))
@@ -241,9 +325,13 @@ class State:
 		var current_index = 1
 		while true:
 			var target_idx = start_idx + current_index * direction
+			if target_idx == Vector2i.ZERO:
+				pass
 			if not grid.is_in_bounds_veci(target_idx):
 				return null
 			var tile_info = grid.get_at_veci(target_idx)
+			if tile_info.is_occupied and tile_info.player == player:
+				return null
 			if tile_info.is_occupied and tile_info.player != player:
 				return target_idx
 			current_index += 1
@@ -300,14 +388,23 @@ class State:
 	func execute_move(move: Move):
 		var tile_info = grid.get_at_veci(move.start_idx) as TileInfo
 		tile_info.is_occupied = false
+		var player = tile_info.player
+		
+		if tile_info.piece_type == PieceType.King:
+			player_states[player].has_king_been_moved = true
+		if tile_info.piece_type == PieceType.Rock and move.start_idx.x == 0:
+			player_states[player].has_left_tower_been_moved = true
+		if tile_info.piece_type == PieceType.Rock and move.start_idx.x == 7:
+			player_states[player].has_right_tower_been_moved = true
+			
 		var dest_tile = grid.get_at_veci(move.end_idx)
 		dest_tile.is_occupied = true
 		dest_tile.player = tile_info.player
 		dest_tile.piece_type = tile_info.piece_type
 
-		if move.piece_captured:
-			var captured_piece_tile = grid.get_at_veci(move.piece_captured_idx)
-			captured_piece_tile.is_occupied = false
+		#if move.piece_captured:
+			#var captured_piece_tile = grid.get_at_veci(move.piece_captured_idx)
+			#captured_piece_tile.is_occupied = false
 
 		if move.piece_promoted:
 			dest_tile.piece_type = move.piece_type_promoted
