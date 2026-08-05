@@ -133,10 +133,11 @@ class State:
 			
 	func _move_puts_king_in_threat(move: Move, player: Player, direction):
 		var new_state = get_state_per_move(move)
-		var tiles_opponent = get_tiles_per_player(get_opponent(player))
+		var tiles_opponent = new_state.get_tiles_per_player(get_opponent(player))
 		var tiles_controlled_by_opponent = new_state.get_tiles_controlled(get_opponent(player), tiles_opponent, direction * -1)
 
-		var is_king_threathened = tiles_controlled_by_opponent.filter(func(x): return new_state.grid.get_at_veci(x).piece_type == PieceType.King).size() > 0
+		var is_king_threathened = tiles_controlled_by_opponent\
+			.filter(func(x): return new_state.grid.get_at_veci(x).piece_type == PieceType.King).size() > 0
 		return is_king_threathened
 
 	func _add_castling_move(player: Player, moves: Array[Move], tiles_player: Array[Vector2i], tiles_controlled_by_opponent: Array[Vector2i], right: bool):
@@ -325,8 +326,6 @@ class State:
 		var current_index = 1
 		while true:
 			var target_idx = start_idx + current_index * direction
-			if target_idx == Vector2i.ZERO:
-				pass
 			if not grid.is_in_bounds_veci(target_idx):
 				return null
 			var tile_info = grid.get_at_veci(target_idx)
