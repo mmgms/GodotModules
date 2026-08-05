@@ -87,7 +87,11 @@ class MCTSNode:
 		var explore = c * sqrt(log(self.visits) / child.visits)
 		return exploit + explore
 
-func get_best_move(state: AiDefinitions.GameState, evaluator: AiDefinitions.GameStateEvaluator, iter=50):
+var _max_rollouts: int
+var _c: float
+func get_best_move(state: AiDefinitions.GameState, evaluator: AiDefinitions.GameStateEvaluator, iter=50, max_rollouts=30, c=1.4):
+	_c = c
+	_max_rollouts = max_rollouts
 	_game_state_evaluator = evaluator
 	return _mcts_search(state, iter)
 
@@ -98,12 +102,12 @@ func _mcts_search(root_state: AiDefinitions.GameState, iterations: int):
 	for i in range(iterations):
 		var node = root
 		while not node.is_terminal() and node.is_fully_expanded():
-			node = node.best_child()
+			node = node.best_child(_c)
 		
 		if not node.is_terminal() and not node.is_fully_expanded():
 			node = node.expand()
 
-		var value = node.rollout()
+		var value = node.rollout(_max_rollouts)
 		node.backpropagate(value)
 
 	var best = GenericUtils.max_by(root.children, func(x): return x.visits)
