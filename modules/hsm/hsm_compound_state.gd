@@ -49,10 +49,20 @@ func _on_event(event: StringName):
 		_current_running._on_event(event)
 	
 func _on_enter():
-	super._on_enter()
+	if _enter_callback:
+		_enter_callback.call()
+		
 	if not _current_running:
 		_current_running = _initial_state
-		_current_running._on_enter()
+	_current_running._on_enter()
+		
+	for transition in _transitions:
+		if transition._event.is_empty():
+			if transition._guard and not transition._guard.call():
+				continue
+			_hsm._set_transition_to_process(transition)
+			break
+
 	
 func _on_exit():
 	if _exit_callback:
@@ -85,7 +95,6 @@ func _handle_transition(from: HsmState, target: HsmState):
 	if target == self:
 		_current_running = _initial_state
 		_on_enter()
-		_initial_state._on_enter()
 		return
 		
 	var is_from_descendant = _get_child_to_if_ancestor(from) != null
