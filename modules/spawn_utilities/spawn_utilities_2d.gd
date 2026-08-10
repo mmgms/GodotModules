@@ -22,6 +22,8 @@ static func get_arc_spawn_info(count: int, center_pos: Vector2, radius: float, d
 	var infos: Array[SpawnInfo] = []
 	var half_angle_rad = deg_to_rad(half_angle_deg)
 	var angle_step = (2 * half_angle_rad)/(count-1)
+	if count == 1:
+		angle_step = 0.0
 	var start_angle = dir.angle() - half_angle_rad
 	for i in count:
 		var info = SpawnInfo.new()
@@ -34,6 +36,8 @@ static func get_line_spawn_info(count: int, pos_start: Vector2, pos_end: Vector2
 	var infos: Array[SpawnInfo] = []
 	var direction = pos_start.direction_to(pos_end)
 	var step = pos_end.distance_to(pos_start)/(count-1)
+	if count == 1:
+		step = 0.0
 	for i in count:
 		var info = SpawnInfo.new()
 		info.position = pos_start + direction * step * i

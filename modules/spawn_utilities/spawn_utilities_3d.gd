@@ -9,6 +9,8 @@ static func get_line_spawn_info(count: int, pos_start: Vector3, pos_end: Vector3
 	var infos: Array[SpawnInfo] = []
 	var direction = pos_start.direction_to(pos_end)
 	var step = pos_end.distance_to(pos_start)/(count-1)
+	if count == 1:
+		step = 0.0
 	for i in count:
 		var info = SpawnInfo.new()
 		info.position = pos_start + direction * step * i
