@@ -125,3 +125,10 @@ func _iter_get(iter):
 	data.point = pt
 	data.data = _data[iter]
 	return data
+
+
+func get_array() -> Array[IterData]:
+	var array: Array[IterData] = []
+	for data in self:
+		array.append(data)
+	return array
