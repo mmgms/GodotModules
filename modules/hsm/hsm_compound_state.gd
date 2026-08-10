@@ -9,6 +9,7 @@ var _initial_state: HsmState
 
 
 func _enter_first_time():
+	assert(_children.size() > 0, "HsmCompoundState must have at least one children")
 	_on_enter()
 	_current_running._enter_first_time()
 
