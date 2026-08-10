@@ -200,7 +200,8 @@ func generate() -> GenerationResult:
 			if num_filled_neigh_of_neigh > 1:
 				continue
 
-			
+			if randf() < 0.5:
+				continue
 
 			if _rooms_available.size() > 0 and _should_pick_big_room_callback.call(_rooms_available, rooms_generated):
 				var _room_place_attempt = _find_big_room_to_place_at_exit(door)
@@ -277,6 +278,8 @@ func _find_big_room_to_place_at_exit(door_global_space: Door) -> RoomAttemptPlac
 		var possible_positions = _get_possible_positions_for_attempt_room(room_gen_info, door_global_space.to)
 		var possible_indices = [0, 1, 2, 3]
 		possible_indices.shuffle()
+		if not room_gen_info.allow_rot:
+			possible_indices = [0]
 		for rot_idx in possible_indices:
 			for position in possible_positions:
 				var attempt_info = RoomAttemptPlaceInfo.new()
