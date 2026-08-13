@@ -49,5 +49,5 @@ func process(delta: float) -> IkPose3D:
 func _add_hip_bounce(pose: IkPose3D):
 	var ampl = _ampl_callback.call()
 	var angle = _angle_callback.call()
-	var bounce_offset = (ampl * sin(angle * 2) - ampl) * Vector3.UP
+	var bounce_offset = ampl/2.0 * (sin(angle * 4) - 1.0) * Vector3.UP
 	pose.add_offset(_node, bounce_offset)
