@@ -5,7 +5,6 @@ class_name PlatformerMovementComponent3D
 signal grounded()
 signal airborne()
 
-@export var character: CharacterBody3D
 
 @export var acceleration_on_ground: float = 10.0
 @export var acceleration_on_air: float = 4.0
@@ -24,6 +23,7 @@ signal airborne()
 @export var base_speed: float = 3.0
 @export var jump_speed: float = 7.0
 
+var _character: CharacterBody3D
 var _current_jump_counter: int = 1
 
 var _horizontal_movement_direction_callback: Callable
@@ -62,7 +62,7 @@ func setup():
 					grounded.emit()
 					pass)
 				.set_process_callback(func(_delta):
-					if not character.is_on_floor():
+					if not is_on_floor_cb.call():
 						_hsm.send_event(_falling_event)
 
 					if _is_jump_just_pressed or _is_jump_buffered:
@@ -101,7 +101,7 @@ func setup():
 					_jump_cancellable_state
 					.set_process_callback(func(_delta):
 						if not _jump_requested_callback.call():
-							character.velocity.y = y_velocity_on_cancel
+							set_jump_speed_callback.call(y_velocity_on_cancel)
 							_hsm.send_event(_cancel_jump_event)
 						)
 				)
@@ -141,7 +141,7 @@ func setup():
 				.set_enter_callback(func(): 
 					airborne.emit()
 					_current_jump_counter = 0)
-				.set_process_callback(func(_delta): if character.is_on_floor():
+				.set_process_callback(func(_delta): if is_on_floor_cb.call():
 					_hsm.send_event(_land_event))
 
 		)
@@ -200,8 +200,8 @@ func set_decelerations(ground, air):
 	deceleration_on_air = air
 	return self
 
-func jump(jump_speed):
-	character.velocity.y = jump_speed
+func jump(speed):
+	set_jump_speed_callback.call(speed)
 
 var _last_accelleration: Vector3
 var _last_movement_direction: Vector3
@@ -212,18 +212,70 @@ func get_last_accelleration():
 func get_last_movement_direction():
 	return _last_movement_direction
 
+
+var set_jump_speed_callback: Callable
+var set_movement_velocity_callback: Callable
+var get_velocity_callback: Callable
+var is_on_floor_cb: Callable
+var get_gravity_cb: Callable
+
+# (float) -> ()
+func set_set_jump_speed_callback(cb: Callable):
+	set_jump_speed_callback = cb
+	return self
+
+# (Vector3) -> ()
+func set_set_movement_velocity_callback(cb: Callable):
+	set_movement_velocity_callback = cb
+	return self
+
+# () -> ()
+func set_get_velocity_callback(cb: Callable):
+	get_velocity_callback = cb
+	return self
+
+# () -> bool
+func set_is_on_floor_callback(cb: Callable):
+	is_on_floor_cb = cb
+	return self
+
+# () -> Vector3
+func set_get_gravity_callback(cb: Callable):
+	get_gravity_cb = cb
+	return self
+
+
+func set_character3d(character3d: CharacterBody3D):
+	_character = character3d
+
+	set_jump_speed_callback = func(speed): _character.velocity.y = speed
+	
+	set_movement_velocity_callback = func(velocity): 
+		_character.velocity = velocity
+		_character.move_and_slide()
+
+	get_velocity_callback = func(): return _character.velocity
+
+	is_on_floor_cb = func (): return _character.is_on_floor()
+
+	get_gravity_cb = func(): return _character.get_gravity()
+
+
+
 func move(delta: float):
 	
 	
 	_hsm.process(delta)
 	
 	var movement_direction: Vector2 = _horizontal_movement_direction_callback.call()
-	var _movement_velocity = character.velocity
-	if not character.is_on_floor():
-		_movement_velocity += character.get_gravity() * delta
 
-	var _accel =  acceleration_on_ground if character.is_on_floor() else acceleration_on_air
-	var _decel = deceleration_on_ground if character.is_on_floor() else deceleration_on_air
+	var _movement_velocity = get_velocity_callback.call()
+
+	if not is_on_floor_cb.call():
+		_movement_velocity += get_gravity_cb.call() * delta
+
+	var _accel =  acceleration_on_ground if is_on_floor_cb.call() else acceleration_on_air
+	var _decel = deceleration_on_ground if is_on_floor_cb.call() else deceleration_on_air
 	
 	var to: Vector3
 	if not movement_direction.is_zero_approx():
@@ -233,12 +285,11 @@ func move(delta: float):
 		to = Vector3(0.0, _movement_velocity.y, 0.0)
 		_movement_velocity = _movement_velocity.move_toward(to, _decel * delta)
 		
-	_last_accelleration = (to - character.velocity) * _accel * delta
+	_last_accelleration = (to - get_velocity_callback.call()) * _accel * delta
 	_last_movement_direction = Vector3(movement_direction.x, 0.0, movement_direction.y)
 
 
-	character.velocity = _movement_velocity
-	character.move_and_slide()
+	set_movement_velocity_callback.call(_movement_velocity)
 	
 func get_hsm_debug_label():
 	return _hsm.get_debug_string()
