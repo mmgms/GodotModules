@@ -46,8 +46,27 @@ func set_stride_min_max_speed(min_speed: float, max_speed: float):
 
 func process(delta: float):
 	_update_stride_wheel_angle(delta)
+
+	# var cylinder_transform = Transform3D()
+	# cylinder_transform.origin = _ik_target_parent.global_position + Vector3.UP * _stride_wheel_radius
+	# cylinder_transform.basis =  _ik_target_parent.global_basis * Basis.from_euler(Vector3(0, 0, deg_to_rad(-90)))
+	# cylinder_transform = cylinder_transform.scaled_local(Vector3(_stride_wheel_radius, 0.01, _stride_wheel_radius))
+	# cylinder_transform = cylinder_transform.rotated_local(Vector3.UP, _current_angle)
+	# for i in range(8):
+	# 	var offset = deg_to_rad(45) * i + deg_to_rad(45)
+	# 	var direction = cylinder_transform.basis.x.normalized().rotated(cylinder_transform.basis.y.normalized(), offset)
+	# 	if i %2 == 0:
+	# 		DebugDraw3D.draw_line(cylinder_transform.origin, cylinder_transform.origin + direction * _stride_wheel_radius, Color.GREEN)
+	# 	else:
+	# 		DebugDraw3D.draw_line(cylinder_transform.origin + direction * _stride_wheel_radius * 0.7, cylinder_transform.origin + direction * _stride_wheel_radius, Color.GREEN)
+
+	# DebugDraw2D.set_text("stride_wheel_radius", _stride_wheel_radius)
+	# DebugDraw3D.draw_cylinder(cylinder_transform,  Color.GREEN)
+	#DebugDraw3D.draw_gizmo(cylinder_transform)
+	
 	var current_weight = fposmod(_current_angle/TAU*_pose_sequence.size(), 1)
 	var current_index = floori(_current_angle/TAU * _pose_sequence.size())
+	# DebugDraw2D.set_text("current_index", current_index)
 
 	var idx0 = wrapi(current_index -1, 0, _pose_sequence.size())
 	var idx1 = current_index
@@ -86,6 +105,7 @@ func _build_pose_sequence(pass_ik_pose_r: IkPose3D, reach_ik_pose_r: IkPose3D, m
 	#poses_seq.assign([pass_ik_pose_r, reach_ik_pose_r, pass_ik_pose_l, reach_ik_pose_l])
 	var arr = [pass_ik_pose_r, reach_ik_pose_r, pass_ik_pose_l, reach_ik_pose_l]
 	arr.reverse()
+	arr.append_array(arr)
 	poses_seq.assign(arr)
 	## array of poses
 	return poses_seq
