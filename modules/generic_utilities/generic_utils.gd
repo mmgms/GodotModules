@@ -182,3 +182,22 @@ static func pick_random_weighted(arr: Array, custom_func: Callable):
 	var weights = arr.map(func(x): return custom_func.call(x))
 	var rng = RandomNumberGenerator.new()
 	return arr[rng.rand_weighted(weights)]
+
+
+class ValueSmoother:
+
+	var array: CircularBuffer
+
+	func _init(max_frames: int) -> void:
+		array = CircularBuffer.new()
+		array.resize(max_frames)
+
+
+	func update(new_value: Variant) -> Variant:
+		if array.is_full():
+			array.pop_front()
+			array.push_back(new_value)
+		else:
+			array.push_back(new_value)
+
+		return array._data.reduce(func(accum, x): return accum + x)/array.size()
