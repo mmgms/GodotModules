@@ -1,6 +1,5 @@
 class_name GridNavigation2D
-## Wrapper for astargrid2d, can append Tilemaplayers to generate grid
-
+## Wrapper for astargrid2d, can append Tilemaplayers to generate grid, need to set cell size
 
 
 var _astar_grid_2d: AStarGrid2D

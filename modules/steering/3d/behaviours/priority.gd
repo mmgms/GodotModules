@@ -40,9 +40,9 @@ func calculate_steering(agent: SteeringAgent3D, parameters: SteeringParameters3D
 		for i in range(size):
 			last_selected_index = i
 			var behavior = _behaviors[i]
-			behavior.calculate_steering(accel)
+			behavior.calculate_steering(agent, parameters, accel)
 
-			if accel.get_magnitude_squared() > threshold_squared:
+			if accel.linear.length_squared() > threshold_squared:
 				break
 	else:
 		accel.set_zero()
