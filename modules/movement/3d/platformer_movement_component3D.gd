@@ -259,6 +259,8 @@ func set_character3d(character3d: CharacterBody3D):
 	is_on_floor_cb = func (): return _character.is_on_floor()
 
 	get_gravity_cb = func(): return _character.get_gravity()
+	
+	return self
 
 
 
