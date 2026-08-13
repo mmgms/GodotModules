@@ -2629,7 +2629,7 @@ func morph_color_sequence(node: CanvasItem, colors: Array, step_dur: float = 0.3
 func morph_color_sequence_stop(node: CanvasItem) -> void:
 	_morph_color_active.erase(node)
 
-
+## MINE
 
 func zoom_pan_camera_2d(camera: Camera2D, final_pos: Vector2, final_zoom: float, duration: float):
 	var tween = create_tween()
@@ -2637,4 +2637,17 @@ func zoom_pan_camera_2d(camera: Camera2D, final_pos: Vector2, final_zoom: float,
 	tween.tween_property(camera, "zoom", Vector2.ONE * final_zoom, duration)
 	tween.tween_property(camera, "position", final_pos, duration)
 	
+	return tween
+	
+	
+func spawn_pop_in(node: Node2D, dur = 0.4):
+	node.scale = Vector2.ZERO
+	var tween = create_tween()
+	tween.tween_property(node, "scale", Vector2.ONE, dur).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SPRING)
+	return tween
+
+
+func modulate_to(node: CanvasItem, to: Color, dur = 0.4):
+	var tween = create_tween()
+	tween.tween_property(node, "modulate", to, dur).set_ease(Tween.EASE_OUT)
 	return tween
