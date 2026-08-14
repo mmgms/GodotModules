@@ -51,13 +51,14 @@ func _apply_lean(delta, pose: IkPose3D):
 	if lean_amout > 0.0:
 	
 		var lean_axis = lean / lean_amout;
+		#DebugDraw3D.draw_line(_node.global_position, _node.global_position + lean_axis)
 		var lean_angle = lean_multi * lean_amout 
 		lean_angle = min( lean_angle, max_lean_angle)
 		target_lean = Quaternion(lean_axis, deg_to_rad( lean_angle ))
 
 	_lean_interpolator.update(delta, target_lean)
-
-	var rot: Quaternion = _lean_interpolator.y * Basis.from_euler(Vector3(0, _node.global_rotation.y, 0.0)).get_rotation_quaternion()
+	var pose_global_transform = _node.get_parent().global_transform * pose.node_to_transform[_node]
+	var rot: Quaternion = _lean_interpolator.y * pose_global_transform.basis.get_rotation_quaternion()
 	
 	#_node.global_basis = Basis(rot)
 	pose.node_to_transform[_node].basis = _node.get_parent().global_basis.inverse() * Basis(rot)
