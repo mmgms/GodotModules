@@ -210,3 +210,38 @@ func create_damped_spring_joint(body_a: PhysicsBody2D, body_b: PhysicsBody2D, re
 
 	joint.node_a = body_a.get_path()
 	joint.node_b = body_b.get_path()
+
+
+class ShapeCastCollisionResult3D:
+	var final_safe_position: Vector3
+
+
+# returns null if no collision
+static func check_static_shapecast_collision_3d(space_state: PhysicsDirectSpaceState3D, 
+		static_layer: int, 
+		from: Vector3, 
+		to: Vector3, radius: float) -> ShapeCastCollisionResult3D:
+	
+	var shapecast_res = ShapeCastCollisionResult3D.new()
+	var query = PhysicsShapeQueryParameters3D.new() 
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+
+	query.collision_mask = static_layer
+
+	var shape = SphereShape3D.new()
+	shape.radius = radius
+	query.shape = shape
+
+	var transform = Transform3D()
+	transform.origin = from
+	query.transform = transform
+
+	query.motion = to - from
+
+	var res = space_state.cast_motion(query)
+	var safe_proportion = res[0]
+	#var unsafe_proportion = res[1]
+	shapecast_res.final_safe_position = from + safe_proportion * (to - from) 
+	
+	return shapecast_res
