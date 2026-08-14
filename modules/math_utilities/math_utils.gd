@@ -222,3 +222,11 @@ static func get_rotation_snapped_direction(vec: Vector2, snap_size_rad: float) -
 	var angle = vec.angle()
 	var angle_snapped = snapped(angle, snap_size_rad)
 	return Vector2.RIGHT.rotated(angle_snapped) * vec.length()
+
+
+static func rect_between_points(a: Vector2, b: Vector2) -> Rect2:
+	var rect = Rect2()
+
+	rect.position = Vector2(min(a.x, b.x), min(a.y, b.y))
+	rect.size = Vector2(abs(a.x - b.x), abs(a.y-b.y))
+	return rect
