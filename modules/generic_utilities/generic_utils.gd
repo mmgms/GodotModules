@@ -201,3 +201,72 @@ class ValueSmoother:
 			array.push_back(new_value)
 
 		return array._data.reduce(func(accum, x): return accum + x)/array.size()
+
+static func pick_random_n(arr: Array, n: int):
+	assert(arr.size() >= n)
+	var dupl = arr.duplicate()
+	dupl.shuffle()
+	dupl.slice(0, n)
+	return dupl.slice(0, n)
+	
+	
+
+class DisjointSet:
+	var elements: Array
+
+static func find_disjoint_sets(arr: Array, get_neighbours_cb: Callable) -> Array[DisjointSet]:
+	var sets: Array[DisjointSet] = []
+	var labeled_elements: Dictionary = {}
+	var current_set_tag = 0
+	for elem in arr:
+		if labeled_elements.has(elem):
+			continue
+		find_connected_dfs(elem, get_neighbours_cb).map(func(x): labeled_elements[x] = current_set_tag)
+		current_set_tag += 1
+	for i in range(current_set_tag):
+		var elements = labeled_elements.keys().filter(func(x): return labeled_elements[x] == i)
+		var disjoint_set = DisjointSet.new()
+		disjoint_set.elements = elements
+		sets.append(disjoint_set)
+	
+	return sets
+
+static func find_connected_dfs(start: Variant,  get_neighbours_cb: Callable) -> Array:
+	var connected = []
+	var queue = [start]
+	while not queue.is_empty():
+		var elem = queue.pop_back()
+		connected.append(elem)
+		for neigh in get_neighbours_cb.call(elem):
+			if not connected.has(neigh) and not queue.has(neigh):
+				queue.append(neigh)
+	return connected
+
+static func get_tile_rotation_deg(tile_map_layer: TileMapLayer, coord: Vector2i) -> float:
+	var is_transpose = tile_map_layer.is_cell_transposed(coord)
+	var is_flip_h =  tile_map_layer.is_cell_flipped_h(coord)
+	var is_flip_v =  tile_map_layer.is_cell_flipped_v(coord)
+
+	if is_transpose and is_flip_h:
+		return 90.0
+
+	if is_flip_h and is_flip_v:
+		return 180.0
+
+	if is_transpose and is_flip_v:
+		return 270.0
+
+	return 0.0
+
+
+static func set_tile_rotation_deg(tile_map_layer: TileMapLayer, coord: Vector2i, source_id: int, atlas_coords: Vector2i, rotation: float):
+	var rot_to_transform = {
+		0: 0,
+		1: TileSetAtlasSource.TRANSFORM_TRANSPOSE | TileSetAtlasSource.TRANSFORM_FLIP_H,
+		2: TileSetAtlasSource.TRANSFORM_FLIP_H | TileSetAtlasSource.TRANSFORM_FLIP_V,
+		3: TileSetAtlasSource.TRANSFORM_TRANSPOSE | TileSetAtlasSource.TRANSFORM_FLIP_V,
+	}
+	var idx = int(rotation/90)
+	var transform = rot_to_transform[idx]
+
+	tile_map_layer.set_cell(coord, source_id, atlas_coords, transform)

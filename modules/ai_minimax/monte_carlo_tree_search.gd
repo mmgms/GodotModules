@@ -111,7 +111,4 @@ func _mcts_search(root_state: AiDefinitions.GameState, iterations: int):
 		node.backpropagate(value)
 
 	var best = GenericUtils.max_by(root.children, func(x): return x.visits)
-	print("values")
-	for child in root.children:
-		print("visits: %s, wins: %s" % [child.visits, child.wins])
 	return best.action

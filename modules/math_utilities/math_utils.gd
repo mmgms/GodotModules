@@ -230,3 +230,24 @@ static func rect_between_points(a: Vector2, b: Vector2) -> Rect2:
 	rect.position = Vector2(min(a.x, b.x), min(a.y, b.y))
 	rect.size = Vector2(abs(a.x - b.x), abs(a.y-b.y))
 	return rect
+
+static var _four_dir = [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP]
+
+static func get_neighbours_4(pos: Vector2i) -> Array[Vector2i]:
+	var neigh: Array[Vector2i] = []
+	for dir in _four_dir:
+		neigh.append(pos + dir)
+
+	return neigh
+	
+
+static var _eight_dir = [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, 
+	Vector2i.DOWN+Vector2i.LEFT, Vector2i.DOWN+Vector2i.RIGHT,
+	Vector2i.UP+Vector2i.LEFT, Vector2i.UP+Vector2i.RIGHT]
+
+static func get_neighbours_8(pos: Vector2i) -> Array[Vector2i]:
+	var neigh: Array[Vector2i] = []
+	for dir in _eight_dir:
+		neigh.append(pos + dir)
+
+	return neigh

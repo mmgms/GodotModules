@@ -147,7 +147,7 @@ static func check_static_raycast_collision_2d(space_state: PhysicsDirectSpaceSta
 
 
 
-func collect_bodies_in_radius_2d(space_state: PhysicsDirectSpaceState2D, 
+static func collect_bodies_in_radius_2d(space_state: PhysicsDirectSpaceState2D, 
 		position: Vector2,
 		body_layer: int, 
 		radius: float) -> Array[PhysicsBody2D]:
@@ -172,7 +172,7 @@ func collect_bodies_in_radius_2d(space_state: PhysicsDirectSpaceState2D,
 
 
 
-func collect_bodies_in_radius_3d(space_state: PhysicsDirectSpaceState3D, 
+static func collect_bodies_in_radius_3d(space_state: PhysicsDirectSpaceState3D, 
 		position: Vector3,
 		body_layer: int, 
 		radius: float) -> Array[PhysicsBody3D]:
@@ -196,7 +196,7 @@ func collect_bodies_in_radius_3d(space_state: PhysicsDirectSpaceState3D,
 	return bodies
 
 # creates and attaches as body_a child a damped spring joint from body_a to body_b
-func create_damped_spring_joint(body_a: PhysicsBody2D, body_b: PhysicsBody2D, rest_length, stiffness=100, damping=1.0, bias=1.0):
+static func create_damped_spring_joint(body_a: PhysicsBody2D, body_b: PhysicsBody2D, rest_length, stiffness=100, damping=1.0, bias=1.0):
 	var joint = DampedSpringJoint2D.new()
 	body_a.add_child(joint)
 	
@@ -245,3 +245,64 @@ static func check_static_shapecast_collision_3d(space_state: PhysicsDirectSpaceS
 	shapecast_res.final_safe_position = from + safe_proportion * (to - from) 
 	
 	return shapecast_res
+
+
+class RaycastArasCollisionResult2D:
+	var area
+	var position: Vector2
+	var normal: Vector2
+
+static func check_area_raycast_collect_pos_collision(space_state: PhysicsDirectSpaceState2D, 
+		static_layer: int, 
+		area_layer: int, 
+		from: Vector2, 
+		to: Vector2,
+		hit_from_inside: bool=false) -> RaycastArasCollisionResult2D:
+
+	var query = PhysicsRayQueryParameters2D.create(from, to) 
+	query.collide_with_areas = true
+	query.collide_with_bodies = true
+	query.hit_from_inside = hit_from_inside
+
+	query.collision_mask = static_layer | area_layer
+
+	var coll_res = RaycastArasCollisionResult2D.new()
+
+	var res = space_state.intersect_ray(query)
+	if res.is_empty() or res.collider is StaticBody2D:
+		coll_res.area = null
+	else:
+		coll_res.area = res.collider
+
+	coll_res.position = res.position
+	coll_res.normal = res.normal
+
+	
+	return coll_res
+
+
+static func collect_bodies_in_rectangle_2d(space_state: PhysicsDirectSpaceState2D, 
+		body_layer: int, 
+		from: Vector2,
+		to: Vector2,
+		size: float) -> Array[PhysicsBody2D]:
+	
+	var bodies = [] as Array[PhysicsBody2D]
+	var query = PhysicsShapeQueryParameters2D.new()
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+
+	query.collision_mask = body_layer
+
+	var shape = RectangleShape2D.new()
+	query.shape = shape
+	shape.size.y = size
+	shape.size.x = from.distance_to(to)
+	query.transform = Transform2D((to-from).angle(), (from + to)/2.0)
+
+	var res = space_state.intersect_shape(query)
+	if res.is_empty():
+		return bodies
+	
+	bodies.assign(res.map(func(x): return x.collider as PhysicsBody2D))
+	return bodies

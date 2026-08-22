@@ -25,6 +25,8 @@ static func get_arc_spawn_info(count: int, center_pos: Vector2, radius: float, d
 	if count == 1:
 		angle_step = 0.0
 	var start_angle = dir.angle() - half_angle_rad
+	if count == 1:
+		start_angle = dir.angle()
 	for i in count:
 		var info = SpawnInfo.new()
 		info.look_direction = Vector2.from_angle(start_angle + i * angle_step)
