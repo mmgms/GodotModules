@@ -251,3 +251,17 @@ static func get_neighbours_8(pos: Vector2i) -> Array[Vector2i]:
 		neigh.append(pos + dir)
 
 	return neigh
+
+
+static var rotations = [0, -PI/2, PI,  PI/2]
+
+# get center that places an item with extents and rotation in a grid with tile_size, the center is "normalized" with respect to the grid 
+static func get_snapped_center_from_extents_rotation(pos: Vector2, extents: Vector2i, rotation: int=0, tile_size: Vector2=Vector2.ONE) -> Vector2:
+	var rel_pos_norm = pos/tile_size
+	var flipped_extents = Vector2i(extents.y, extents.x)
+	if rotation % 2 == 1:
+		extents = flipped_extents
+	var extents_center: Vector2 = Vector2(extents)/2.0
+	var grid_offset = Vector2(fposmod(extents_center.x, 1), fposmod(extents_center.y, 1))
+	var center = (rel_pos_norm - grid_offset).snapped(Vector2.ONE) + grid_offset
+	return center
