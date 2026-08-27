@@ -221,7 +221,7 @@ static func find_disjoint_sets(arr: Array, get_neighbours_cb: Callable) -> Array
 	for elem in arr:
 		if labeled_elements.has(elem):
 			continue
-		find_connected_dfs(elem, get_neighbours_cb).map(func(x): labeled_elements[x] = current_set_tag)
+		flood_fill(elem, get_neighbours_cb).map(func(x): labeled_elements[x] = current_set_tag)
 		current_set_tag += 1
 	for i in range(current_set_tag):
 		var elements = labeled_elements.keys().filter(func(x): return labeled_elements[x] == i)
@@ -231,16 +231,82 @@ static func find_disjoint_sets(arr: Array, get_neighbours_cb: Callable) -> Array
 	
 	return sets
 
-static func find_connected_dfs(start: Variant,  get_neighbours_cb: Callable) -> Array:
+# bfs
+static func flood_fill(start: Variant,  get_neighbours_cb: Callable) -> Array:
 	var connected = []
 	var queue = [start]
 	while not queue.is_empty():
-		var elem = queue.pop_back()
+		var elem = queue.pop_front()
 		connected.append(elem)
 		for neigh in get_neighbours_cb.call(elem):
 			if not connected.has(neigh) and not queue.has(neigh):
 				queue.append(neigh)
 	return connected
+
+
+static func flood_fill_conditioned(start: Variant,  get_neighbours_cb: Callable, add_element_condition: Callable) -> Array:
+	var connected = []
+	var queue = [start]
+	while not queue.is_empty():
+		var elem = queue.pop_front()
+		connected.append(elem)
+		for neigh in get_neighbours_cb.call(elem):
+			if not connected.has(neigh) and not queue.has(neigh) and add_element_condition.call(neigh):
+				queue.append(neigh)
+	return connected
+
+static func _reconstruct_path(came_from: Dictionary, current: Variant):
+	var total_path = [current]
+	while came_from.has(current):
+		current = came_from[current]
+		total_path.push_front(current)
+	return total_path
+
+static func astar(start: Variant, goal: Variant,
+ 		get_neighbours_cb: Callable, 
+ 		compute_cost_cb: Callable, 
+ 		estimate_cost_cb: Callable, 
+		allow_partial_path: bool=false) -> Array[Variant]:
+	var path: Array[Variant] = []
+	
+	var open_set = [start]
+
+	var came_from = {}
+
+	var g_score = {}
+	g_score[start] = 0.0
+
+	var f_score = {}
+	f_score[start] = estimate_cost_cb.call(start, goal)
+	
+	var closest_node = null
+	var shortest_distance = INF
+	while not open_set.is_empty():
+		var current = GenericUtils.max_by(open_set, func(x): return - f_score.get(x, INF))
+		var distance = estimate_cost_cb.call(current, goal)
+		if distance < shortest_distance:
+			shortest_distance = distance
+			closest_node = current
+		if current == goal:
+			return _reconstruct_path(came_from, current)
+
+		open_set.erase(current)
+		for neigh in get_neighbours_cb.call(current):
+			var tentative_g_score = g_score.get(current, INF) + compute_cost_cb.call(current, neigh)
+			if tentative_g_score < g_score.get(neigh, INF):
+				came_from[neigh] = current
+				g_score[neigh] = tentative_g_score
+				f_score[neigh] = tentative_g_score + estimate_cost_cb.call(neigh, goal)
+				if not open_set.has(neigh):
+					open_set.append(neigh)
+
+	if allow_partial_path:
+		var partial_path = _reconstruct_path(came_from, closest_node)
+		if partial_path.size() > 1:
+			pass
+		return partial_path
+
+	return path
 
 static func get_tile_rotation_deg(tile_map_layer: TileMapLayer, coord: Vector2i) -> float:
 	var is_transpose = tile_map_layer.is_cell_transposed(coord)
@@ -258,7 +324,6 @@ static func get_tile_rotation_deg(tile_map_layer: TileMapLayer, coord: Vector2i)
 
 	return 0.0
 
-
 static func set_tile_rotation_deg(tile_map_layer: TileMapLayer, coord: Vector2i, source_id: int, atlas_coords: Vector2i, rotation: float):
 	var rot_to_transform = {
 		0: 0,
@@ -270,3 +335,6 @@ static func set_tile_rotation_deg(tile_map_layer: TileMapLayer, coord: Vector2i,
 	var transform = rot_to_transform[idx]
 
 	tile_map_layer.set_cell(coord, source_id, atlas_coords, transform)
+
+static func get_plus_minus_string_int(value: int):
+	return "%s%s" % ["-" if value < 0 else "+", abs(value)]

@@ -397,7 +397,7 @@ func wobble(node: CanvasItem, factor: float = 1.2, dur: float = 0.2, times: int 
 # =============================================================================
 
 # Moves the node to a target position over `dur` seconds.
-func move_to(node: Node2D, target: Vector2, dur: float = 0.4) -> PropertyTweener:
+func move_to(node: CanvasItem, target: Vector2, dur: float = 0.4) -> PropertyTweener:
 	if not _is_valid(node):
 		return null
 	return _new_tween(node).tween_property(node, "position", target, dur)

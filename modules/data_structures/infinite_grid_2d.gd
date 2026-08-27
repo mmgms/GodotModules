@@ -2,13 +2,14 @@ extends RefCounted
 class_name InfiniteGrid2D
 
 var _data: Dictionary[Vector2i, Variant]
+var _default = null
 
 func _init() -> void:
 	_data = {}
 
 func get_at_veci(vec: Vector2i) -> Variant:
 	if not _data.has(vec):
-		return null
+		return _default
 	return _data[vec]
 
 func set_at_veci(vec: Vector2i, value: Variant):
@@ -18,6 +19,9 @@ func set_at_veci(vec: Vector2i, value: Variant):
 	_data[vec] = value
 	return self
 	
+func set_default(value: Variant):
+	_default = value
+	return self
 	
 func get_array():
 	return _data.values()
